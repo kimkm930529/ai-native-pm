@@ -1,3 +1,7 @@
+---
+model: claude-opus-4-6
+---
+
 # red-team-validator — Sub-agent Spec
 
 ## 역할

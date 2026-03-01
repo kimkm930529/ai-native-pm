@@ -220,6 +220,33 @@ cp -r initiatives/_template initiatives/2026Q1/TM-xxxx
 
 ---
 
+## 에이전트 모델 정책
+
+각 에이전트는 작업 특성에 따라 최적 모델을 개별 지정한다. 지정이 없는 에이전트는 오케스트레이터(Sonnet 4.6)를 상속한다.
+
+| 에이전트 | 모델 | 지정 방식 | 근거 |
+|---------|------|---------|------|
+| `confluence-reader` | Sonnet 4.6 | 상속 (기본값) | 토픽 라우팅·요약 판단 필요 |
+| `confluence-writer` | **Haiku 4.5** | AGENT.md 프론트매터 | XHTML 변환·포맷팅 위주, 판단 불필요 |
+| `requirement-writer` | Sonnet 4.6 | 상속 (기본값) | P0/P1 분류 전략적 판단 필요 |
+| `ux-logic-analyst` | Sonnet 4.6 | 상속 (기본값) | 플로우·정책 설계 복잡도 있음 |
+| `red-team-validator` | **Opus 4.6** | AGENT.md 프론트매터 | 30개+ 적대적 비판 질문 생성, 창의적 추론 필요 |
+| `message-architect` (GTM) | Sonnet 4.6 | 상속 (기본값) | One-liner·카피 창작 |
+| `channel-planner` (GTM) | Sonnet 4.6 | 상속 (기본값) | Before/After·롤아웃 전략 판단 |
+| `epic-decomposer` | Haiku 4.5 | AGENT.md 추가 예정 | 기계적 스토리 분해·포맷팅 |
+| `ticket-formatter` | Haiku 4.5 | AGENT.md 추가 예정 | 순수 포맷팅, 가장 단순한 작업 |
+
+**모델 지정 방법** — AGENT.md 최상단에 YAML 프론트매터 추가:
+```yaml
+---
+model: claude-opus-4-6        # Opus 4.6
+# model: claude-sonnet-4-6   # Sonnet 4.6 (기본값)
+# model: claude-haiku-4-5-20251001  # Haiku 4.5
+---
+```
+
+---
+
 ## 현재 이 시스템으로 할 수 있는 것
 
 ### 시스템 구성 전체 지도

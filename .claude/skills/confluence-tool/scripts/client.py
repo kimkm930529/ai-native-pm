@@ -15,6 +15,7 @@ import urllib.error
 import urllib.parse
 from pathlib import Path
 from typing import Optional
+from urllib.parse import urlparse
 
 # ─── 로그 설정 ────────────────────────────────────────────
 OUTPUT_DIR = Path(__file__).parents[4] / "output"
@@ -65,9 +66,9 @@ def request(
     path는 /wiki/rest/api 이후 부분 (예: /space?limit=10)
     """
     base_url = get_base_url()
-    # confluence_uploader.py는 /wiki/rest/api{path}를 사용
-    # 여기서는 base_url에 /wiki가 이미 없으므로 직접 붙임
-    if "/wiki" in base_url:
+    # /wiki 가 URL의 경로(path)에 포함된 경우에만 생략 (도메인에 wiki가 있는 경우 제외)
+    parsed_path = urlparse(base_url).path
+    if parsed_path.startswith("/wiki"):
         url = f"{base_url}/rest/api{path}"
     else:
         url = f"{base_url}/wiki/rest/api{path}"
