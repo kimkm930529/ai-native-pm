@@ -1,0 +1,25 @@
+{
+  "_comment": "이니셔티브 메타데이터. 에이전트가 작업 컨텍스트 파악에 사용한다.",
+  "ticket_id": "TM-2061",
+  "title": "Campaign Meta Engine (Phase 1): CMS 연동 기반 캠페인·소재 관리 표준화",
+  "quarter": "2026Q1",
+  "status": "In Progress",
+  "priority": "High",
+  "owner": "",
+  "stakeholders": ["PM", "Design", "Dev FE", "Dev BE", "MLE", "QA", "무신사 마케팅"],
+  "dates": {
+    "start": "2026-01-01",
+    "deadline": "2026-03-31",
+    "last_updated": "2026-02-28"
+  },
+  "confluence": {
+    "primary_space": "membership",
+    "related_spaces": ["membership"],
+    "parent_page_url": "https://wiki.team.musinsa.com/wiki/spaces/membership/overview"
+  },
+  "jira": {
+    "ticket_url": "https://musinsa-oneteam.atlassian.net/browse/TM-2061",
+    "epic_url": ""
+  },
+  "tags": ["CRM", "Campaign", "MATCH", "Braze", "CMS", "ML", "Push"]
+}

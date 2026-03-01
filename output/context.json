@@ -1,0 +1,64 @@
+{
+  "query": "첫구매",
+  "timestamp": "2026-02-28T14:54:00",
+  "total": 7,
+  "escalate": false,
+  "results": [
+    {
+      "id": "301433622",
+      "title": "[PRD] 마이페이지 내 크로스플랫폼 상시 혜택 노출",
+      "space": "membership",
+      "url": "https://musinsa-oneteam.atlassian.net/wiki/wiki/spaces/membership/pages/301433622",
+      "excerpt": "배경 및 문제: 유저가 본인의 혜택을 확인하기 위해 방문하는 '마이페이지' 내에 다른 플랫폼의 혜택을 알려주는 고정된 공간이 없어, 크로스 플랫폼 유저로 전환될 기회를 놓치고 있음. 무신사<>29CM 첫구매 혜택 노출을 통한 크로스플랫폼 전환 유도 방안 포함. 실질적 구매 혜택 소구를 통한 신규 구매 전환 목적.",
+      "lastModified": "2026-02-12"
+    },
+    {
+      "id": "300548559",
+      "title": "오디언스 분석 (WIP)",
+      "space": "membership",
+      "url": "https://musinsa-oneteam.atlassian.net/wiki/wiki/spaces/membership/pages/300548559",
+      "excerpt": "오디언스 분석의 목적: 현재 상태와 특성을 정의하는 것을 넘어, 상태의 특성·원인·추세·전이 가능성을 설명할 수 있어야 함. 첫구매 전환을 위한 오디언스 세그먼트 정의 및 캠페인 설계 포함. Aha Moment 개입이 상태 전이(첫구매)를 일으키는 메커니즘 분석.",
+      "lastModified": "2026-02-10"
+    },
+    {
+      "id": "199034021",
+      "title": "PRD [7-A-3] 무신사 플랫폼 로레알MBB 회원 연동 및 혜택 구현",
+      "space": "membership",
+      "url": "https://musinsa-oneteam.atlassian.net/wiki/wiki/spaces/membership/pages/199034021",
+      "excerpt": "무신사 플랫폼과 로레알MBB 회원 연동 PRD. 신규 고객 첫구매 혜택 및 회원 등급 혜택 연동 구현. 멤버십 통합을 통한 고객 생애가치(LTV) 향상 목적.",
+      "lastModified": "2025-12-15"
+    },
+    {
+      "id": "50262331",
+      "title": "브랜드 등급 배지 체계",
+      "space": "membership",
+      "url": "https://musinsa-oneteam.atlassian.net/wiki/wiki/spaces/membership/pages/50262331",
+      "excerpt": "브랜드 등급 배지 체계 정책 문서. 신규 고객 첫구매 시 제공되는 브랜드 배지 및 혜택 체계 정의 포함. 브랜드별 등급 기준 및 첫구매 유도 인센티브 구조 명시.",
+      "lastModified": "2024-12-12"
+    },
+    {
+      "id": "153795630",
+      "title": "20241217 빅배너 미구매자 대상 배너 노출",
+      "space": "PE",
+      "url": "https://musinsa-oneteam.atlassian.net/wiki/wiki/spaces/PE/pages/153795630",
+      "excerpt": "빅배너 미구매자 대상 배너 노출 논의. 정책: '빅배너 미구매자 대상 배너 노출은 신규고객팀에서 운영하는 배너 노출(웰컴페이지 랜딩)을 최우선으로 한다'. 회원+0구매자(DAU의 20% coverage)를 대상으로 첫구매 유도 배너 우선 노출 적용. 참석자: 이은규, 곽민섭, 서현직, 여지운, 백재현, 백종일, 김준호.",
+      "lastModified": "2025-08-18"
+    },
+    {
+      "id": "281805362",
+      "title": "화제성 콘텐츠 CMS 연동 및 노출 최적화(스코어링/Imp Cap) 설계 - HLD/LLD",
+      "space": "PE",
+      "url": "https://musinsa-oneteam.atlassian.net/wiki/wiki/spaces/PE/pages/281805362",
+      "excerpt": "화제성 상품(드롭, 에디션, K커넥트, 스페셜)의 전시 노출 구좌로 하이라이팅 퀵메뉴와 스플래시를 운영. 현재 퀵메뉴 노출 방식은 랜덤 노출로, 콘텐츠의 중요도나 시의성이 반영되지 않는 문제. 미구매자/첫구매 유저 세그먼트를 위한 노출 스코어링 시스템 설계 포함.",
+      "lastModified": "2026-01-29"
+    },
+    {
+      "id": "153795603",
+      "title": "99. 모델 features & 관련 프로젝트 정리",
+      "space": "PE",
+      "url": "https://musinsa-oneteam.atlassian.net/wiki/wiki/spaces/PE/pages/153795603",
+      "excerpt": "추천 모델에서 사용하는 피처 목록 및 관련 프로젝트 정리. 첫구매 여부(0구매자/구매자) 피처를 포함한 유저 구매 이력 기반 피처 엔지니어링 현황. 개인화 추천 모델에서 구매 단계(첫구매/재구매) 구분 피처 활용.",
+      "lastModified": "2025-08-20"
+    }
+  ]
+}

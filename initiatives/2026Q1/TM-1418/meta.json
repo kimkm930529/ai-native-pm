@@ -1,0 +1,25 @@
+{
+  "_comment": "이니셔티브 메타데이터. 에이전트가 작업 컨텍스트 파악에 사용한다.",
+  "ticket_id": "TM-1418",
+  "title": "이니셔티브명",
+  "quarter": "2026Q1",
+  "status": "In Progress",
+  "priority": "High",
+  "owner": "",
+  "stakeholders": [],
+  "dates": {
+    "start": "YYYY-MM-DD",
+    "deadline": "YYYY-MM-DD",
+    "last_updated": "YYYY-MM-DD"
+  },
+  "confluence": {
+    "primary_space": "",
+    "related_spaces": [],
+    "parent_page_url": ""
+  },
+  "jira": {
+    "ticket_url": "",
+    "epic_url": ""
+  },
+  "tags": []
+}

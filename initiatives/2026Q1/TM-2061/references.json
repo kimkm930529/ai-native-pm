@@ -1,0 +1,47 @@
+# TM-2061: Campaign Meta Engine (Phase 1) — 참고 자료
+
+> 에이전트가 Confluence 검색 전 이 파일을 먼저 확인하여 이미 알려진 문서를 우선 참조한다.
+
+---
+
+## Confluence 문서
+
+| 제목 | Space | URL | 설명 |
+|------|-------|-----|------|
+| [2-pager] Campaign Meta Engine 구축을 통한 목적 기반의 타겟팅을 지원한다. | membership | https://wiki.team.musinsa.com/wiki/spaces/membership/pages/214729679 | 이니셔티브 전체 배경·전략 문서. Executive Summary, 문제 정의, 솔루션 구조, Phase별 로드맵, Key Metrics 포함 |
+| [PRD] Campaign Meta Engine (Phase 1): CMS 연동 기반 캠페인·소재 관리 표준화 | membership | https://wiki.team.musinsa.com/wiki/spaces/membership/pages/216960895 | Phase 1 상세 기획. 요구사항, 서비스 Flow, 상세 기획 (Sync 생성, 엑셀 등록, 소재 탐색), 정책 포함. v1.1 기준 |
+
+## 외부 문서 (Google Docs / Sheets)
+
+| 제목 | URL | 설명 |
+|------|-----|------|
+| MATCH Campaign Meta-Engine - High-Level Design | https://docs.google.com/document/d/1m6xrbLTtjTKO21Ckd7XJbD-C-pFO4qGb_bx7wDtS1KU/edit?tab=t.0#heading=h.ildx6u87thi7 | 시스템 HLD (High-Level Design). 2-pager Appendix 참조 |
+| Campaign Meta Engine - Table Schema (WIP) | https://docs.google.com/spreadsheets/d/1WVIsrDiH1p_5e2G9005JPKr6M32aQxIeEc1xTa6P-9Y/edit?gid=967534985#gid=967534985 | DB 테이블 스키마 설계 문서 (작업 중) |
+| Personalization Tech Vision Roadmap | - | Phase별 캠페인 자동화 비전. 2-pager Appendix 참조 |
+
+## Jira 티켓
+
+| 유형 | ID | URL | 설명 |
+|------|-----|-----|------|
+| Initiative | TM-2061 | https://musinsa-oneteam.atlassian.net/browse/TM-2061 | 메인 이니셔티브 티켓 |
+
+## 연관 시스템 / 도구
+
+| 시스템 | 역할 |
+|--------|------|
+| **MATCH** | 무신사 CRM 의사결정 플랫폼. Sync, Send Group, Campaign Asset 관리 주체 |
+| **Braze** | 실제 메시지 발송 실행 플랫폼. MATCH의 의사결정을 받아 발송 수행 |
+| **무신사 CMS (CPCMS)** | 콘텐츠(기획전, 매거진, 라이브) 원본 데이터 소스. Content-API 통해 메타데이터 연동 |
+| **엑셀 세일즈푸시 스프레드시트** | 현재 운영 중인 레거시 시스템. Phase 1 목표: MATCH로 100% 이관 |
+
+## 데이터 / 대시보드
+
+| 이름 | 도구 | 설명 |
+|------|------|------|
+| - | - | 추가 예정 |
+
+## Slack 스레드 (주요 논의)
+
+| 날짜 | 채널 | 요약 |
+|------|------|------|
+| - | - | 추가 예정 |
