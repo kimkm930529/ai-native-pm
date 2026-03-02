@@ -250,7 +250,7 @@ pm-studio/
 │   └── 2026Q1/                   ← Q1 이니셔티브 (TM-xxxx 폴더)
 ├── output/                       ← 공통 산출물 (context.json, draft.html, 로그)
 ├── prd-agent-system/             ← PRD 자동 생성 에이전트 시스템
-├── epic-ticket-system/           ← 에픽 → 티켓 분해 에이전트 시스템
+├── epic-ticket-system/           ← PRD → 에픽 분해 + Jira 티켓 자동 생성
 ├── gtm-agent-system/             ← GTM 브리프 자동 생성 에이전트 시스템
 └── ux-copywriter-system/         ← UX 카피라이팅 에이전트 시스템
 ```
@@ -314,14 +314,38 @@ Confluence 자동 업로드: PRD + Red Team 질문지 2개 문서
 
 ---
 
-### 에이전트 시스템 3: Epic Ticket System
+### 에이전트 시스템 3: Epic Architect (개발 실행 연동)
 
 **위치:** `epic-ticket-system/`
-**핵심 기능:** 에픽 설명 또는 PRD를 입력하면 Jira 티켓 단위로 분해하고 포맷팅한다.
+**핵심 기능:** 완성된 PRD를 직무별(BE/FE/MLE/DS) 에픽으로 분해하고,
+Confluence 초안 문서를 자동 생성한 뒤 개발자 컨펌 후 Jira 에픽 티켓을 자동 생성한다.
 
-**서브 에이전트:**
-- `epic-decomposer` — 에픽을 P0/P1 기준 스토리/태스크로 분해
-- `ticket-formatter` — Jira 티켓 형식(제목, 설명, AC, 예상 포인트)으로 정제
+**데이터 흐름:**
+```
+PRD (Confluence URL or .md)  +  Jira 이니셔티브 키
+    ↓
+[Phase 1] epic-architect 에이전트
+    → 직무별 에픽 분리 (BE/FE/MLE/DS)
+    → AC·우선순위·Start/Due Date 계산 (dependency_rules.md 참조)
+    → epic_spec_{날짜}_{주제}.json 저장
+    → Confluence에 [Draft] Epic Specification 하위 페이지 자동 생성
+    ↓ 사용자 컨펌 ("실행" 입력)
+[Phase 2] jira-skill 스크립트
+    → fetch_initiative.py: 부모 이니셔티브 라벨·컴포넌트 추출
+    → create_tickets.py: 에픽 티켓 일괄 생성 (라벨 상속 + 직무 라벨 추가)
+    → Jira 티켓 URL 목록 출력
+```
+
+**주요 산출물:**
+- Confluence: `[Draft] {주제} Epic Specification` (PRD 하위 페이지)
+- Jira: 에픽 티켓 N개 (라벨 자동 상속, Start/Due Date 포함)
+- `output/epic_spec_{날짜}_{주제}.json` — 에픽 명세 JSON
+- `output/jira_result_{날짜}_{주제}.json` — 생성된 Jira 티켓 URL
+
+**추가 환경변수 필요:**
+```bash
+export JIRA_PROJECT_KEY="TM"   # Jira 프로젝트 키
+```
 
 ---
 
@@ -447,6 +471,8 @@ python3 gtm-agent-system/.claude/skills/brief-formatter/scripts/assemble.py \
 | `gtm-agent-system/output/prd_parsed.json` | GTM용 PRD 파싱 결과 |
 | `gtm-agent-system/output/messaging_draft.json` | 메시징 초안 |
 | `gtm-agent-system/output/strategy_draft.json` | 전략 초안 |
+| `epic-ticket-system/output/epic_spec_*.json` | 직무별 에픽 명세 (AC·날짜·의존성 포함) |
+| `epic-ticket-system/output/jira_result_*.json` | 생성된 Jira 에픽 티켓 URL 목록 |
 | `initiatives/{분기}/{티켓}/output/` | 이니셔티브별 산출물 |
 
 ---
