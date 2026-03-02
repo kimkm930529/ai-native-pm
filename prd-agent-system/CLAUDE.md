@@ -39,6 +39,12 @@ Rough Note + Confluence 키워드
    ② ux-logic-analyst: Mermaid 플로우, 정책, 예외 케이스
         │
         ▼
+[Phase 2.5: 다이어그램 시각화 - diagram-generator]  ← NEW
+   - ux-logic-analyst가 생성한 모든 Mermaid 코드 수집
+   - 각 플로우를 output/diagrams/{주제}_{타입}_flow.mmd 로 저장
+   - render.py --all 실행 → output/diagrams/*.html 생성
+        │
+        ▼
 [Phase 3: 통합 및 Self-Review]
    - prd_template.md 구조로 통합
    - 실행 계획 및 Open Questions 추가
@@ -46,7 +52,7 @@ Rough Note + Confluence 키워드
    - output/prd_{YYYYMMDD}_{주제}.md 저장
         │
         ▼
-[Phase 4: Red Team Validation]  ← NEW
+[Phase 4: Red Team Validation]
    - Phase 1~3 전체 결과물 기반 비판적 질문 생성
    - 사용자 멘탈모델 + 비즈니스 + 플로우/정책 관점
    - output/redteam_{YYYYMMDD}_{주제}.md 저장
@@ -118,7 +124,43 @@ diagram-generator 스킬로 Mermaid 코드 문법을 반드시 검증할 것.
 
 ---
 
-## 5. Phase 3: 통합 및 Self-Review
+## 5. Phase 2.5: 다이어그램 시각화
+
+`ux-logic-analyst` 완료 직후, `diagram-generator` 스킬을 통해 모든 Mermaid 플로우를 HTML로 렌더링한다. **생략 불가.**
+
+### Step 2.5-A: .mmd 파일 저장
+
+`ux-logic-analyst`가 반환한 Mermaid 코드 블록을 각각 `.mmd` 파일로 저장한다.
+
+파일명 규칙: `output/diagrams/{주제}_{타입}_flow.mmd`
+
+| 타입 예시 | 파일명 예시 |
+|---------|-----------|
+| 사용자 플로우 | `campaign_user_flow.mmd` |
+| 상태 전이 | `campaign_state_flow.mmd` |
+| API 시퀀스 | `campaign_api_flow.mmd` |
+| 에러/예외 | `campaign_error_flow.mmd` |
+
+### Step 2.5-B: HTML 렌더링 실행
+
+```bash
+cd /Users/musinsa/Documents/agent_project/pm-studio/prd-agent-system && \
+python3 .claude/skills/diagram-generator/scripts/render.py --all
+```
+
+렌더링 결과는 `output/diagrams/*.html`에 저장되며, 오케스트레이터는 완료 출력에 이 경로를 포함한다.
+
+### Step 2.5-C: 렌더링 결과 검증
+
+| 검증 항목 | 기준 |
+|---------|-----|
+| .mmd 파일 수 | ux-logic-analyst가 생성한 플로우 수와 동일 |
+| .html 파일 수 | .mmd 파일 수와 동일 |
+| 렌더링 실패 | 해당 플로우를 Open Questions에 추가, 나머지는 계속 진행 |
+
+---
+
+## 6. Phase 3: 통합 및 Self-Review
 
 ### Step 3-A: PRD 초안 작성
 
@@ -175,12 +217,16 @@ PRD를 옹호하거나 설명하지 말고, 오직 공격하고 의심하는 질
 
 📄 PRD 파일:      output/prd_{YYYYMMDD}_{주제}.md
 🔴 Red Team 파일: output/redteam_{YYYYMMDD}_{주제}.md
+🖼️  다이어그램:    output/diagrams/*.html ({N}개)
 
 📊 North Star: {지표명}
 📝 요구사항: P0 {N}건 / P1 {N}건
-🔀 플로우: {N}개 Mermaid 차트
+🔀 플로우: {N}개 Mermaid 차트 (HTML 렌더링 완료)
 ❓ Open Questions: {N}건
 🔍 Red Team 질문: {N}건 ({N}개 카테고리)
+
+🖼️ 다이어그램 미리보기:
+{각 .html 파일의 file:// 경로 목록}
 
 Confluence에 두 문서를 업로드합니다.
 ```
@@ -219,6 +265,7 @@ python3 .claude/skills/confluence-tool/scripts/upload.py \
 | Rough Note 누락 | 기능 아이디어 재요청 (1번 항목 참조) |
 | 지표 모호 | KPI 에스컬레이션 (3번 항목 참조) |
 | Mermaid 문법 오류 | diagram-generator 1회 재시도 → 실패 시 Open Questions에 추가 |
+| 렌더링 실패 (.html 미생성) | render.py 오류 메시지 확인 → 해당 .mmd 파일 경로를 사용자에게 안내 |
 | Confluence 검색 0건 | 사용자에게 직접 자료 제공 요청 또는 키워드 수정 후 재검색 |
 | 업로드 실패 (PRD) | `output/prd_*.md` 경로 안내 후 수동 업로드 요청, Red Team 업로드는 계속 시도 |
 | 업로드 실패 (Red Team) | `output/redteam_*.md` 경로 안내 후 수동 업로드 요청 |

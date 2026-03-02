@@ -1,11 +1,12 @@
-# Diagram Generator — Mermaid.js 생성 및 검증 규약
+# Diagram Generator — Mermaid.js 생성 · 검증 · 렌더링 규약
 
 ## 개요
 
 `ux-logic-analyst` 에이전트가 생성한 Mermaid.js 코드의 문법 유효성을 검증하고,
-표준화된 형식으로 교정하는 보조 스킬.
+표준화된 형식으로 교정한 뒤 **HTML 파일로 시각화**하는 보조 스킬.
 
-**이 스킬은 별도 Python 스크립트 없이 LLM이 직접 문법 규칙을 적용하여 검증한다.**
+**검증**: LLM이 직접 문법 규칙을 적용한다.
+**렌더링**: `scripts/render.py`가 `.mmd` → `.html` 변환을 수행한다.
 
 ---
 
@@ -101,7 +102,9 @@ flowchart TD
 
 ---
 
-## 5. 출력 형식
+## 5. 출력 형식 및 렌더링 파이프라인
+
+### Step 1 — Mermaid 코드 반환
 
 검증 통과한 코드는 반드시 아래 형식으로 반환:
 
@@ -111,7 +114,38 @@ flowchart TD
 ```
 ````
 
-저장 경로 (선택): `output/diagrams/{기능명}_flow.mmd`
+### Step 2 — .mmd 파일 저장
+
+저장 경로: `output/diagrams/{기능명}_flow.mmd`
+
+> `ux-logic-analyst`가 여러 플로우를 생성하는 경우, 각 플로우별로 별도 `.mmd` 파일로 저장한다.
+> 파일명 규칙: `{주제}_{타입}_flow.mmd` (예: `campaign_user_flow.mmd`, `campaign_state_flow.mmd`)
+
+### Step 3 — HTML 렌더링 (필수)
+
+`.mmd` 저장 직후 `render.py`를 실행하여 브라우저에서 바로 열 수 있는 HTML을 생성한다.
+
+```bash
+# 단일 파일
+cd /Users/musinsa/Documents/agent_project/pm-studio/prd-agent-system && \
+python3 .claude/skills/diagram-generator/scripts/render.py \
+  output/diagrams/{기능명}_flow.mmd
+
+# 전체 .mmd 일괄 렌더링
+cd /Users/musinsa/Documents/agent_project/pm-studio/prd-agent-system && \
+python3 .claude/skills/diagram-generator/scripts/render.py --all
+```
+
+출력 파일: `output/diagrams/{기능명}_flow.html`
+→ `file://` 경로로 macOS Safari / Chrome 에서 바로 확인 가능.
+
+### 인라인 코드로 즉시 렌더링 (에이전트 직접 호출 시)
+
+```bash
+python3 .claude/skills/diagram-generator/scripts/render.py \
+  --inline "flowchart TD\n  A --> B" \
+  --name campaign_inline_flow
+```
 
 ---
 
