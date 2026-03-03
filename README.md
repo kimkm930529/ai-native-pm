@@ -252,7 +252,8 @@ pm-studio/
 ├── prd-agent-system/             ← PRD 자동 생성 에이전트 시스템
 ├── epic-ticket-system/           ← PRD → 에픽 분해 + Jira 티켓 자동 생성
 ├── gtm-agent-system/             ← GTM 브리프 자동 생성 에이전트 시스템
-└── ux-copywriter-system/         ← UX 카피라이팅 에이전트 시스템
+├── ux-copywriter-system/         ← UX 카피라이팅 에이전트 시스템
+└── discovery-intelligence-system/ ← [NEW] Product Discovery Intelligence System (PDIS)
 ```
 
 ---

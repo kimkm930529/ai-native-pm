@@ -1,0 +1,34 @@
+{
+  "id": "P0X",
+  "name": "홍길동",
+  "age": 0,
+  "gender": "남성 | 여성 | 기타",
+  "location": "서울 강남구",
+  "occupation": "직군 및 직책",
+  "income_level": "low | mid | high",
+  "tech_savviness": "low | mid | high",
+  "segment": "해당하는 화이트스페이스 또는 타겟 세그먼트명",
+
+  "goals": [
+    "이 페르소나가 궁극적으로 이루고 싶은 것 1",
+    "목표 2"
+  ],
+  "frustrations": [
+    "현재 경험하는 불만 1 — 구체적 상황 포함",
+    "불만 2",
+    "불만 3"
+  ],
+  "current_behavior": "현재 이 문제를 어떻게 해결하고 있는가 — 대체 행동 설명",
+  "quote": "이 페르소나가 할 법한 대표 발언 — 1~2문장",
+
+  "attitude": {
+    "skepticism_level": "low | mid | high",
+    "price_sensitivity": "low | mid | high",
+    "brand_loyalty": "low | mid | high"
+  },
+
+  "interview_hints": [
+    "이 페르소나 인터뷰 시 탐색할 핵심 질문 또는 상황 1",
+    "질문 또는 상황 2"
+  ]
+}

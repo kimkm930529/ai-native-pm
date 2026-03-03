@@ -1,0 +1,7 @@
+flowchart TD
+    Start([사용자 요청]) --> Classify{요청 분류}
+    Classify -- 조회 --> Reader[confluence-reader]
+    Classify -- 업로드 --> Writer[confluence-writer]
+    Reader --> SaveContext[context.json 저장]
+    Writer --> Upload[upload.py 실행]
+    Upload -- 성공 --> FinalURL([페이지 URL 반환])
