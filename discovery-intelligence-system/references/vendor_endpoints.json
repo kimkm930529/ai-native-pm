@@ -1,0 +1,54 @@
+{
+  "vendors": {
+    "amplitude": {
+      "name": "Amplitude",
+      "category": "Product Analytics",
+      "github": {
+        "owner": "amplitude",
+        "repo": "amplitude-dev-center",
+        "docs_path": "docs",
+        "branch": "main"
+      },
+      "api_base": "https://api.github.com/repos/amplitude/amplitude-dev-center/contents",
+      "key_topics": ["analytics", "events", "funnels", "cohorts", "experimentation", "retention"],
+      "use_case_hint": "분석·이벤트 설계·퍼널·코호트·리텐션 관련 탐색 시 우선 참조"
+    },
+    "braze": {
+      "name": "Braze",
+      "category": "Customer Engagement Platform",
+      "github": {
+        "owner": "braze-inc",
+        "repo": "braze-docs",
+        "docs_path": "_docs",
+        "branch": "develop"
+      },
+      "api_base": "https://api.github.com/repos/braze-inc/braze-docs/contents",
+      "key_topics": ["push-notifications", "in-app-messages", "email", "canvas", "campaigns", "segmentation", "personalization"],
+      "use_case_hint": "마케팅 자동화·푸시·인앱 메시지·CRM 관련 탐색 시 우선 참조"
+    },
+    "shopify": {
+      "name": "Shopify",
+      "category": "E-commerce Platform",
+      "app_store": {
+        "base_url": "https://apps.shopify.com",
+        "search_url": "https://apps.shopify.com/search?q={query}",
+        "top_apps_url": "https://apps.shopify.com/collections/{category}"
+      },
+      "key_categories": ["marketing", "analytics", "customer-service", "inventory", "social-media", "reviews"],
+      "use_case_hint": "커머스·앱 생태계·플러그인 벤치마크 탐색 시 우선 참조"
+    }
+  },
+  "routing_rules": {
+    "retention": ["amplitude", "braze"],
+    "analytics": ["amplitude"],
+    "push": ["braze"],
+    "marketing": ["braze", "shopify"],
+    "crm": ["braze"],
+    "personalization": ["amplitude", "braze"],
+    "ecommerce": ["shopify"],
+    "experiment": ["amplitude"],
+    "funnel": ["amplitude"],
+    "default": ["amplitude", "braze"]
+  },
+  "last_updated": "2026-03-04"
+}

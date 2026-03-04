@@ -1,5 +1,5 @@
 ---
-model: claude-sonnet-4-6
+model: claude-haiku-4-5-20251001
 ---
 
 # epic-architect — 에픽 분석 및 설계 에이전트

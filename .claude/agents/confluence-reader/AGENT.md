@@ -1,3 +1,7 @@
+---
+model: claude-haiku-4-5-20251001
+---
+
 # confluence-reader — Sub-agent Spec
 
 ## 역할

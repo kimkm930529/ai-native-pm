@@ -39,11 +39,18 @@ PM의 디스커버리 요청을 수신하여 시장 분석 → 가상 인터뷰 
 ## 3. 전체 워크플로우
 
 ```
-PM 요청 (탐색 주제 + 가설)
+PM 요청 (탐색 주제 + 가설 + --ref 옵션)
         │
         ▼
 [이니셔티브 컨텍스트 로딩] (있을 경우)
         │
+        ▼
+[Phase 0: 외부 지식 수집] ──▶ discovery-analyst  ← --ref 옵션 있을 때만 실행
+        │
+        ├─ Amplitude GitHub Docs 수집 (analytics/retention/experiment)
+        ├─ Braze GitHub Docs 수집 (push/crm/personalization)
+        └─ Shopify App Store 벤치마크 (ecommerce/plugins)
+        │ 출력: output/ext_summary_{YYYYMMDD}_{주제}.md
         ▼
 [Phase 1: 시장 분석] ──▶ market-analyst
         │
@@ -83,6 +90,21 @@ PM 요청 (탐색 주제 + 가설)
 
 ## 4. Phase별 에이전트 호출 규약
 
+### Phase 0 — discovery-analyst 호출 (--ref 옵션 있을 때만)
+
+```
+Task: 아래 탐색 주제에 대한 외부 벤더 레퍼런스를 수집하고 Phase 0 요약을 생성해줘.
+
+탐색 주제: {사용자_탐색_주제}
+이니셔티브 컨텍스트: {context.md 내용 또는 "없음"}
+외부 참조 범위: {--ref 옵션값: all | amplitude | braze | shopify}
+
+references/vendor_endpoints.json의 routing_rules를 참조하여 관련 벤더를 자동 선택하고,
+scripts/ 폴더의 fetch_amplitude.py / fetch_braze.py / search_shopify.py를 호출할 것.
+
+결과를 output/ext_summary_{YYYYMMDD}_{주제}.md에 저장할 것.
+```
+
 ### Phase 1 — market-analyst 호출
 
 ```
@@ -90,6 +112,7 @@ Task: 아래 탐색 주제에 대한 시장 분석을 수행해줘.
 
 탐색 주제: {사용자_탐색_주제}
 이니셔티브 컨텍스트: {context.md 내용 또는 "없음"}
+외부 벤더 레퍼런스: {output/ext_summary_*.md 경로 또는 "없음 — Phase 0 스킵됨"}
 
 수행 범위:
 1. 경쟁사 기능 비교 매트릭스 (한국어/로컬 지원 여부 포함)

@@ -1,7 +1,16 @@
 {
-  "query": "29CM CRM push 운영 현황",
-  "timestamp": "2026-03-03T18:04:51.600477",
-  "total": 0,
-  "escalate": true,
-  "results": []
+  "query": "MATCH 데이터 로드맵",
+  "timestamp": "2026-03-04T09:14:32.326727",
+  "total": 1,
+  "escalate": false,
+  "results": [
+    {
+      "id": "317948765",
+      "title": "MATCH 데이터 로드맵",
+      "space": "~7120209bbd1f66a6e34385957b56995ea34f89",
+      "url": "https://musinsa-oneteam.atlassian.net/wiki/spaces/~7120209bbd1f66a6e34385957b56995ea34f89/pages/317948765",
+      "excerpt": "[data-colorid=yzpcpyrjrb]{color:#36b37e} html[data-color-mode=dark] [data-colorid=yzpcpyrjrb]{color:#4cc994} &nbsp; History of Documents Version 날짜 상세 1.0 2026. 2. 24. ( 최초 작성 ) 1.1 2026. 3. 3. Mike님 피드백 반영 개요 수정 &nbsp; Stakeholder of Documents 구분 싱크 날짜 비고 프로덕트 마케팅 2025. 12. 31. ( 최초 작성 ) 본 로드맵에 포함된",
+      "lastModified": "2026-03-03"
+    }
+  ]
 }
