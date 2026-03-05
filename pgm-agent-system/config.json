@@ -1,0 +1,48 @@
+{
+  "system_name": "pgm-agent-system",
+  "version": "1.0.0",
+  "report": {
+    "title_format": "Weekly Flash — {YYYY}년 {MM}월 {DD}일 주간 보고",
+    "doc_title_format": "Weekly Flash [{YYYYMM}] {MMDD} 주간 보고",
+    "mail_subject_format": "[주간 보고] {MM}/{DD} {top_keyword} 외 {done_count}건 완료",
+    "output_filename_format": "flash_{YYYYMMDD}.md"
+  },
+  "jira": {
+    "default_include_status": ["Done", "In Progress", "In Review", "Testing", "Blocked"],
+    "featured_score_threshold": 4,
+    "max_featured_per_category": 3,
+    "story_points_field": "customfield_10016",
+    "sprint_field": "customfield_10020"
+  },
+  "scoring": {
+    "priority_highest": 3,
+    "priority_high": 2,
+    "story_points_gte_5": 2,
+    "story_points_gte_3": 1,
+    "label_weekly_flash": 2,
+    "label_okr_or_north_star": 2,
+    "is_blocked": 3,
+    "in_memo": 1
+  },
+  "mail": {
+    "max_achievements_featured": 3,
+    "max_status_featured": 2,
+    "max_next_week_featured": 3,
+    "tone": "명사형 종결 어미 (~함, ~완료, ~예정, ~중)",
+    "recipients_env_var": "FLASH_REPORT_RECIPIENTS"
+  },
+  "google": {
+    "docs_folder_env_var": "GOOGLE_DRIVE_FOLDER_ID",
+    "credentials_env_var": "GOOGLE_CLIENT_SECRETS_PATH",
+    "token_env_var": "GOOGLE_CREDENTIALS_PATH"
+  },
+  "validation": {
+    "required_md_headers": [
+      "## ✅ 성과",
+      "## ▶ 진행 현황",
+      "## 📋 다음 주 계획"
+    ],
+    "bold_pattern": "**",
+    "nominal_endings": ["함", "완료", "예정", "중", "없음"]
+  }
+}
