@@ -9,3 +9,5 @@ __pycache__/
 .claude/settings.local.json
 no_commit/
 report-agent-system/output/
+/Users/musinsa/Documents/agent_project/pm-studio/epic-ticket-system/output
+output/
