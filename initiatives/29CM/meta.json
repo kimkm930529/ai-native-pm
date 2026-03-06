@@ -1,0 +1,51 @@
+{
+  "_comment": "Rec API 지식 베이스. 29CMRec 및 PE 스페이스의 Confluence 문서를 기반으로 정리.",
+  "ticket_id": "N/A",
+  "title": "Rec API (29CM 추천 API)",
+  "quarter": "2026Q1",
+  "status": "Active",
+  "priority": "High",
+  "owner": "",
+  "stakeholders": [],
+  "dates": {
+    "start": "2026-03-02",
+    "deadline": "",
+    "last_updated": "2026-03-02"
+  },
+  "confluence": {
+    "primary_space": "29CMRec",
+    "related_spaces": ["PE"],
+    "parent_page_url": "",
+    "source_pages": [
+      {
+        "id": "31283513",
+        "title": "REC API",
+        "url": "https://wiki.team.musinsa.com/wiki/spaces/29CMRec/pages/31283513/REC+API",
+        "space": "29CMRec"
+      },
+      {
+        "id": "296750255",
+        "title": "Rec-API Global Routing",
+        "url": "https://wiki.team.musinsa.com/wiki/spaces/29CMRec/pages/296750255/Rec-API+Global+Routing",
+        "space": "29CMRec"
+      },
+      {
+        "id": "312935926",
+        "title": "2026-02-23 (PE 미팅 노트)",
+        "url": "https://wiki.team.musinsa.com/wiki/spaces/PE/pages/312935926/2026-02-23",
+        "space": "PE"
+      },
+      {
+        "id": "308543700",
+        "title": "29CM rec-api",
+        "url": "https://wiki.team.musinsa.com/wiki/spaces/PE/pages/308543700/29CM+rec-api",
+        "space": "PE"
+      }
+    ]
+  },
+  "jira": {
+    "ticket_url": "",
+    "epic_url": ""
+  },
+  "tags": ["rec-api", "29cm", "recommendation", "routing"]
+}

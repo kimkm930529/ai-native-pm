@@ -204,6 +204,24 @@ PM 입력 (슬래시 명령어 or 자연어)
          │    └─▶ report-agent-system/output/report_review_*.md     │
          │        + Confluence 자동 업로드 (하위 페이지) ────────────┘
          │
+         ├──/pgm────────────────────────────────────────────────────┐
+         │                                                          │
+         │  [Weekly Flash Report System]                            │
+         │    Jira 프로젝트 키 + 사용자 메모                         │
+         │                                                          │
+         │  Step 1: jira-parser 스킬                                │
+         │    └─▶ output/jira_raw_{날짜}.json                       │
+         │                                                          │
+         │  Step 2: analyst 서브에이전트                             │
+         │    └─▶ output/analysed_report.json                       │
+         │                                                          │
+         │  Step 3: publisher 서브에이전트                           │
+         │    ├─▶ output/flash_{날짜}.md                            │
+         │    ├─▶ Google Docs 초안 URL                              │
+         │    └─▶ Gmail 초안 ID                                     │
+         │                                                          │
+         │  Step 4: Self-Validation (5개 항목) ─────────────────────┘
+         │
          └──(자연어 요청)────────────────────────────────────────────┐
                                                                     │
             [Confluence Intelligence Agent] (루트 CLAUDE.md)        │
@@ -336,6 +354,23 @@ PM 입력 (슬래시 명령어 or 자연어)
 
 ---
 
+### 상황 9: "이번 주 진행 현황을 팀장/C레벨에게 공유해야 해"
+
+```
+에이전트: Weekly Flash Report System (/pgm)
+입력: /pgm MATCH 이번 주 추가할 메모 내용
+출력: output/flash_{날짜}.md + Google Docs 초안 URL + Gmail 초안 ID
+소요: 3~5분
+```
+
+**활용 패턴:**
+1. Jira 프로젝트 키와 보충 메모를 함께 입력
+2. analyst가 Done/In Progress/Blocked 티켓을 자동 분류 및 우선순위 판단
+3. publisher가 Markdown + Google Docs + Gmail 초안 3종 동시 생성
+4. Gmail 초안을 열어 수신자 추가 후 발송
+
+---
+
 ## 슬래시 커맨드 전체 목록
 
 | 커맨드 | 에이전트 시스템 | 핵심 기능 |
@@ -346,6 +381,7 @@ PM 입력 (슬래시 명령어 or 자연어)
 | `/epic` | Epic Architect | PRD → Jira 에픽 티켓 자동 생성 |
 | `/gtm` | GTM Agent System | PRD → GTM 브리프 생성 |
 | `/report` | C레벨 Report Quality System | 보고서 품질 검토 + 종합 판정 |
+| `/pgm` | Weekly Flash Report System | Jira + 메모 → 주간 보고서 3종 (MD/Docs/Gmail) |
 
 ---
 
@@ -438,12 +474,25 @@ pm-studio/
 │       ├── channel-planner/
 │       └── brief-formatter/
 ├── ux-copywriter-system/            ← UX 카피라이팅 에이전트 시스템
-├── report-agent-system/             ← [NEW] C레벨 보고서 품질 검토 시스템
+├── report-agent-system/             ← C레벨 보고서 품질 검토 시스템
 │   ├── CLAUDE.md                    ← 보고서 리뷰 오케스트레이터
 │   ├── references/
 │   │   └── report_principles.md    ← 9개 C레벨 보고서 품질 원칙
 │   └── .claude/agents/
 │       └── report-red-team/        ← 보고서 비판·피드백 에이전트
+├── pgm-agent-system/                ← [NEW] Weekly Flash Report 시스템
+│   ├── CLAUDE.md                    ← Flash Report 오케스트레이터
+│   ├── config.json                  ← 프로젝트·채널 설정
+│   ├── input/                       ← 사용자 메모 임시 저장
+│   ├── output/                      ← 생성된 리포트 저장
+│   └── .claude/
+│       ├── agents/
+│       │   ├── analyst/             ← Jira 데이터 분류·우선순위 판단
+│       │   └── publisher/           ← MD/Docs/Gmail 3종 포맷 변환
+│       └── skills/
+│           ├── jira-parser/         ← Jira API 티켓 수집
+│           ├── google-api-handler/  ← Google Docs·Gmail 초안 생성
+│           └── file-generator/      ← Markdown 파일 생성
 └── discovery-intelligence-system/  ← [ENHANCED] PDIS + External Knowledge Connector
     ├── CLAUDE.md                    ← Lead Researcher 오케스트레이터
     ├── scripts/                     ← [NEW] 외부 데이터 수집 스크립트
@@ -636,6 +685,46 @@ input/prd_*.md
 **핵심 기능:** C레벨 보고를 위한 문서의 품질을 9개 원칙 기반으로 검토하고,
 종합 판정(즉시 결재 가능 / 질문 후 결재 / 반려 가능성 있음)을 내린다.
 
+---
+
+### 에이전트 시스템 8: Weekly Flash Report System
+
+**위치:** `pgm-agent-system/`
+**핵심 기능:** Jira 티켓과 사용자 메모를 결합하여 핵심 성과 위주의 Weekly Flash Report를 생성하고,
+Markdown / Gmail 초안 / Google Docs 초안 3가지 포맷으로 자동 배포(초안)한다.
+
+**데이터 흐름:**
+```
+Jira 프로젝트 키 + 사용자 메모
+    ↓
+[Step 1] jira-parser 스킬
+    → 이번 주 Done/In Progress/Blocked 티켓 수집
+    → output/jira_raw_{YYYYMMDD}.json
+    ↓
+[Step 2] analyst 서브에이전트
+    → 항목 분류 + 우선순위 판단 (⭐ 핵심 태그 포함)
+    → output/analysed_report.json
+    ↓
+[Step 3] publisher 서브에이전트
+    → output/flash_{YYYYMMDD}.md
+    → Google Docs 초안 URL
+    → Gmail 초안 ID
+    ↓
+[Step 4] Self-Validation (5개 체크)
+    → 산출물 3종 완비 / 볼드 처리 / 명사형 어미 / 카테고리 4종 / 우선 항목 존재
+```
+
+**주요 산출물:**
+- `output/flash_{YYYYMMDD}.md` — 로컬 마크다운 최종본
+- Google Docs 초안 URL — 문서 링크 공유용
+- Gmail 초안 ID — 이메일 발송 준비 완료
+
+**추가 환경변수 필요:**
+```bash
+export JIRA_API_TOKEN="..."          # Jira API 인증
+export GOOGLE_CREDENTIALS_JSON="..." # Google Docs/Gmail OAuth 인증
+```
+
 **보고서 유형 지원:**
 - 투자케이스 / 예산 승인 요청
 - 전략 로드맵 / 계획 보고
@@ -787,6 +876,9 @@ python3 discovery-intelligence-system/scripts/search_shopify.py \
 | `epic-ticket-system/output/epic_spec_*.json` | 직무별 에픽 명세 (AC·날짜·의존성 포함) |
 | `epic-ticket-system/output/jira_result_*.json` | 생성된 Jira 에픽 티켓 URL 목록 |
 | `report-agent-system/output/report_review_*.md` | C레벨 보고서 품질 검토 결과 |
+| `pgm-agent-system/output/flash_*.md` | Weekly Flash Report 로컬 마크다운 |
+| `pgm-agent-system/output/analysed_report.json` | Jira 데이터 분류·우선순위 결과 캐시 |
+| `pgm-agent-system/output/jira_raw_*.json` | Jira API 원시 티켓 데이터 |
 | `discovery-intelligence-system/output/ext_amplitude_*.md` | Amplitude 외부 레퍼런스 |
 | `discovery-intelligence-system/output/ext_braze_*.md` | Braze 외부 레퍼런스 |
 | `discovery-intelligence-system/output/ext_shopify_*.md` | Shopify App Store 벤치마크 |
@@ -823,4 +915,4 @@ python3 discovery-intelligence-system/scripts/search_shopify.py \
 
 ---
 
-> **최종 업데이트**: 2026-03-04 | **구동 환경**: Claude Code (claude-sonnet-4-6) + Atlassian Confluence REST API
+> **최종 업데이트**: 2026-03-06 | **구동 환경**: Claude Code (claude-sonnet-4-6) + Atlassian Confluence REST API + Google Workspace API
