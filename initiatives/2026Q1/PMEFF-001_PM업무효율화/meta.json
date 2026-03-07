@@ -1,0 +1,25 @@
+{
+  "_comment": "이니셔티브 메타데이터. 에이전트가 작업 컨텍스트 파악에 사용한다.",
+  "ticket_id": "PMEFF-001",
+  "title": "제품실 PM AI 업무 효율화 프로젝트",
+  "quarter": "2026Q1",
+  "status": "In Progress",
+  "priority": "High",
+  "owner": "경민",
+  "stakeholders": ["제품실 실장", "제품실 PM 전원"],
+  "dates": {
+    "start": "2026-03-06",
+    "deadline": "2026-09-30",
+    "last_updated": "2026-03-06"
+  },
+  "confluence": {
+    "primary_space": "PM",
+    "related_spaces": [],
+    "parent_page_url": ""
+  },
+  "jira": {
+    "ticket_url": "",
+    "epic_url": ""
+  },
+  "tags": ["AI", "업무효율화", "자동화", "역량개발", "제품실"]
+}

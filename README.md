@@ -156,6 +156,23 @@ PM 입력 (슬래시 명령어 or 자연어)
          │  Phase 5: Confluence 자동 업로드                         │
          │    └─▶ PRD + Red Team 2개 페이지 ──────────────────────┐  │
          │                                                       │  │
+         ├──/jira─────────────────────────────────────────────────┼──┘
+         │                                                        │
+         │  [jira-creator Agent]                                  │
+         │    자연어 요청 → 참조 티켓 조회 (선택)                   │
+         │    → 생성 예정 목록 표 정리 → 사용자 컨펌                │
+         │    → create_jira_{이니셔티브}_{날짜}.py 실행             │
+         │    └─▶ output/created_{이니셔티브}_tickets.json          │
+         │                                                        │
+         ├──/mail─────────────────────────────────────────────────┘
+         │
+         │  [doc-specialist → mail-specialist]
+         │    Confluence URL/PageID → doc-specialist
+         │      └─▶ output/weekly_flash_v1.md + source_page.xhtml
+         │    → mail-specialist: xhtml_to_email_html.py / md_to_html.py
+         │    → 사용자 승인 → send_email.py
+         │    └─▶ output/send_log.json
+         │
          ├──/epic ────────────────────────────────────────────────┤  │
          │                                                       │  │
          │  [Epic Architect]                                     │  │
@@ -215,12 +232,17 @@ PM 입력 (슬래시 명령어 or 자연어)
          │  Step 2: analyst 서브에이전트                             │
          │    └─▶ output/analysed_report.json                       │
          │                                                          │
-         │  Step 3: publisher 서브에이전트                           │
-         │    ├─▶ output/flash_{날짜}.md                            │
-         │    ├─▶ Google Docs 초안 URL                              │
-         │    └─▶ Gmail 초안 ID                                     │
+         │  Step 3: publisher + minutes-generator (병렬)             │
+         │    publisher:                                            │
+         │      ├─▶ output/flash_{날짜}.md                          │
+         │      ├─▶ Google Docs 초안 URL                            │
+         │      └─▶ Gmail 초안 ID                                   │
+         │    minutes-generator:                                    │
+         │      ├─▶ output/meeting_minutes_{날짜}.md                │
+         │      ├─▶ Google Docs 회의록 초안 URL                     │
+         │      └─▶ output/slack_summary_{날짜}.txt                 │
          │                                                          │
-         │  Step 4: Self-Validation (5개 항목) ─────────────────────┘
+         │  Step 4: Self-Validation (12개 항목) ────────────────────┘
          │
          └──(자연어 요청)────────────────────────────────────────────┐
                                                                     │
@@ -379,9 +401,11 @@ PM 입력 (슬래시 명령어 or 자연어)
 | `/prd` | Strategic PRD Builder | Rough Note → PRD + Red Team + Confluence 업로드 |
 | `/red` | red-team-validator | PRD 단독 Red Team 검증 |
 | `/epic` | Epic Architect | PRD → Jira 에픽 티켓 자동 생성 |
+| `/jira` | jira-creator | 자연어 → Jira 티켓 일괄 생성 (컨펌 후 실행) |
 | `/gtm` | GTM Agent System | PRD → GTM 브리프 생성 |
 | `/report` | C레벨 Report Quality System | 보고서 품질 검토 + 종합 판정 |
-| `/pgm` | Weekly Flash Report System | Jira + 메모 → 주간 보고서 3종 (MD/Docs/Gmail) |
+| `/pgm` | Weekly Flash Report System | Jira + 메모 → 주간 보고서 + 회의록 + Slack 요약 |
+| `/mail` | mail-specialist + doc-specialist | Confluence / MD → Gmail 발송 |
 
 ---
 
@@ -454,12 +478,32 @@ model: claude-sonnet-4-6            # Sonnet 4.6 (기본값)
 pm-studio/
 ├── CLAUDE.md                        ← 루트 오케스트레이터 (Confluence Intelligence Agent)
 ├── README.md                        ← 이 파일
+├── SKILL_README.md                  ← 스킬 레퍼런스 (사용 가능한 기술 목록)
 ├── config/
 │   └── spaces.json                  ← Confluence Space 키 매핑 및 토픽 라우팅
 ├── initiatives/
 │   ├── index.md                     ← 분기별 이니셔티브 현황 인덱스
 │   ├── _template/                   ← 이니셔티브 추가용 템플릿
 │   └── 2026Q1/                      ← Q1 이니셔티브 (TM-xxxx 폴더)
+├── .claude/
+│   ├── agents/
+│   │   ├── confluence-reader/       ← Confluence 검색·요약 (루트 오케스트레이터 서브에이전트)
+│   │   ├── confluence-writer/       ← Confluence 업로드 (루트 오케스트레이터 서브에이전트)
+│   │   ├── doc-specialist/          ← Confluence 페이지 → Weekly Flash 마크다운 추출 (/mail)
+│   │   ├── jira-creator/            ← 자연어 → Jira 티켓 일괄 생성 (/jira)
+│   │   └── mail-specialist/         ← MD/XHTML → Gmail HTML 변환 + 발송 (/mail)
+│   └── skills/
+│       ├── confluence-tool/         ← Confluence API 공통 스크립트
+│       ├── gmail-tool/              ← Gmail SMTP 발송 스크립트
+│       ├── discovery/               ← /discovery 스킬
+│       ├── prd/                     ← /prd 스킬
+│       ├── red/                     ← /red 스킬
+│       ├── epic/                    ← /epic 스킬
+│       ├── jira/                    ← /jira 스킬 [NEW]
+│       ├── gtm/                     ← /gtm 스킬
+│       ├── report/                  ← /report 스킬
+│       ├── pgm/                     ← /pgm 스킬
+│       └── mail/                    ← /mail 스킬 [NEW]
 ├── output/                          ← 공통 산출물 (context.json, draft.html, 로그)
 ├── prd-agent-system/                ← PRD 자동 생성 에이전트 시스템
 │   └── .claude/agents/
@@ -489,9 +533,14 @@ pm-studio/
 │       ├── agents/
 │       │   ├── analyst/             ← Jira 데이터 분류·우선순위 판단
 │       │   └── publisher/           ← MD/Docs/Gmail 3종 포맷 변환
+│       ├── agents/
+│       │   ├── analyst/             ← Jira 데이터 분류·우선순위 판단
+│       │   ├── publisher/           ← MD/Docs/Gmail 3종 포맷 변환
+│       │   └── minutes-generator/   ← [NEW] 아젠다 선별 + 회의록 + Slack 요약
 │       └── skills/
 │           ├── jira-parser/         ← Jira API 티켓 수집
 │           ├── google-api-handler/  ← Google Docs·Gmail 초안 생성
+│           ├── slack-notifier/      ← [NEW] Slack Webhook 전송
 │           └── file-generator/      ← Markdown 파일 생성
 └── discovery-intelligence-system/  ← [ENHANCED] PDIS + External Knowledge Connector
     ├── CLAUDE.md                    ← Lead Researcher 오케스트레이터
@@ -528,6 +577,9 @@ pm-studio/
 **서브 에이전트:**
 - `confluence-reader` — 키워드 추출 → Space 라우팅 → 검색 → 상위 3건 요약
 - `confluence-writer` — Storage Format 변환 → 포맷 검증 → 업로드 (2회 재시도)
+- `doc-specialist` — Confluence 페이지 → Weekly Flash 마크다운 추출 (`/mail` 경유 또는 직접 호출)
+- `jira-creator` — 자연어 요청 → Jira 티켓 일괄 생성 (`/jira` 경유 호출)
+- `mail-specialist` — 마크다운 / XHTML → Gmail 발송 HTML 변환 + SMTP 발송 (`/mail` 경유 호출)
 
 **Space 자동 라우팅:** 질문 키워드에 따라 탐색 Space가 자동 결정된다.
 
@@ -718,6 +770,9 @@ Jira 프로젝트 키 + 사용자 메모
 - `output/flash_{YYYYMMDD}.md` — 로컬 마크다운 최종본
 - Google Docs 초안 URL — 문서 링크 공유용
 - Gmail 초안 ID — 이메일 발송 준비 완료
+- `output/meeting_minutes_{YYYYMMDD}.md` — 회의록 초안 (minutes-generator)
+- Google Docs 회의록 초안 URL — 회의록 공유용
+- `output/slack_summary_{YYYYMMDD}.txt` — Slack 사전 아젠다 요약
 
 **추가 환경변수 필요:**
 ```bash
@@ -915,4 +970,4 @@ python3 discovery-intelligence-system/scripts/search_shopify.py \
 
 ---
 
-> **최종 업데이트**: 2026-03-06 | **구동 환경**: Claude Code (claude-sonnet-4-6) + Atlassian Confluence REST API + Google Workspace API
+> **최종 업데이트**: 2026-03-07 | **구동 환경**: Claude Code (claude-sonnet-4-6) + Atlassian Confluence REST API + Google Workspace API + Gmail SMTP + Jira REST API v3

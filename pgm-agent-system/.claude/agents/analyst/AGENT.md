@@ -183,9 +183,14 @@ Jira 티켓이 아래 조건을 **모두** 만족할 때:
       "is_featured": false,
       "source": "memo"
     }
-  ]
+  ],
+  "agenda_items": [],
+  "slack_short_summary": ""
 }
 ```
+
+> **참고**: `agenda_items`와 `slack_short_summary` 필드는 analyst가 빈 값으로 초기화하고,
+> `minutes-generator` 에이전트가 실행 후 채워 넣는다.
 
 ---
 

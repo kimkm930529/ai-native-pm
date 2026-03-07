@@ -44,5 +44,24 @@
     ],
     "bold_pattern": "**",
     "nominal_endings": ["함", "완료", "예정", "중", "없음"]
+  },
+  "meeting_minutes": {
+    "title_format": "회의록 [{YYYYMM}] {MMDD} 주간 회의",
+    "output_filename_format": "meeting_minutes_{YYYYMMDD}.md",
+    "agenda_min_count": 3,
+    "agenda_max_count": 5,
+    "time_box_defaults": {
+      "decision": 10,
+      "review": 7,
+      "share": 5,
+      "align": 5
+    }
+  },
+  "slack": {
+    "output_filename_format": "slack_summary_{YYYYMMDD}.txt",
+    "max_chars": 200,
+    "max_agenda_items": 5,
+    "webhook_env_var": "SLACK_WEBHOOK_URL",
+    "nominal_endings": ["결정 필요", "공유", "검토", "조율 예정", "완료"]
   }
 }
