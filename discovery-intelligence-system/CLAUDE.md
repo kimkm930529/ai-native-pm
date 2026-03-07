@@ -29,8 +29,8 @@ PM의 디스커버리 요청을 수신하여 시장 분석 → 가상 인터뷰 
 ## 2. 이니셔티브 컨텍스트 로딩
 
 사용자 입력에 TM-XXXX 또는 이니셔티브 키워드가 포함되면:
-1. `../initiatives/index.md`에서 매칭 이니셔티브를 찾는다.
-2. 해당 이니셔티브의 `context.md`와 `references.md`를 읽어 배경 가설을 파악한다.
+1. `../input/initiatives/index.md`에서 매칭 이니셔티브를 찾는다.
+2. 해당 이니셔티브의 `context.md`와 `references.json`을 읽어 배경 가설을 파악한다.
 3. 로딩된 컨텍스트를 Phase 1 시장 분석의 출발점으로 사용한다.
 4. 최종 산출물은 해당 이니셔티브의 `output/` 폴더에도 복사한다.
 

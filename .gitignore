@@ -9,6 +9,7 @@ __pycache__/
 .claude/settings.local.json
 no_commit/
 output/
+input/
 pgm-agent-system/input/
 .obsidian/
 Rough Notes/

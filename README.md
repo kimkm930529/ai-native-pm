@@ -253,8 +253,8 @@ PM 입력 (슬래시 명령어 or 자연어)
                 └─▶ output/draft.html → Confluence 페이지 URL ───────┘
 
                               ↕ (모든 시스템 공통)
-                    initiatives/ 컨텍스트 공유
-                    (context.md, decisions.md, references.md)
+                    input/initiatives/ 컨텍스트 공유
+                    (context.md, decisions.md, references.json)
 ```
 
 ---
@@ -412,17 +412,19 @@ PM 입력 (슬래시 명령어 or 자연어)
 ## 이니셔티브 컨텍스트 관리 — 지식 플라이휠 구성법
 
 AI Native PM의 핵심 습관은 **컨텍스트를 파일로 남기는 것**이다.
-에이전트는 `initiatives/` 폴더를 자동으로 참조하며, 축적된 컨텍스트일수록 더 정확한 초안을 생성한다.
+에이전트는 `input/initiatives/` 폴더를 자동으로 참조하며, 축적된 컨텍스트일수록 더 정확한 초안을 생성한다.
+
+> **참고**: `input/` 폴더는 gitignore 처리되어 있습니다. 이니셔티브 컨텍스트는 로컬에서만 관리됩니다.
 
 ### 이니셔티브 시작 시 해야 할 일
 
 ```bash
 # 1. 템플릿 복사
-cp -r initiatives/_template initiatives/2026Q1/TM-xxxx
+cp -r input/initiatives/_template input/initiatives/2026Q1/TM-xxxx
 
 # 2. meta.json — 티켓 ID, 상태, 기간, 관련 Confluence Space 입력
 # 3. context.md — 배경, 목표, 핵심 가설, 성공 지표 작성
-# 4. initiatives/index.md 테이블에 행 추가
+# 4. input/initiatives/index.md 테이블에 행 추가
 ```
 
 ### 이니셔티브 진행 중 유지할 파일
@@ -481,10 +483,13 @@ pm-studio/
 ├── SKILL_README.md                  ← 스킬 레퍼런스 (사용 가능한 기술 목록)
 ├── config/
 │   └── spaces.json                  ← Confluence Space 키 매핑 및 토픽 라우팅
+├── input/                           ← 외부 입력 자료 (gitignore) — hld/ meetings/ refs/ data/
+├── Rough Notes/                     ← 빠른 메모·아이디어 초안 (gitignore)
 ├── initiatives/
 │   ├── index.md                     ← 분기별 이니셔티브 현황 인덱스
-│   ├── _template/                   ← 이니셔티브 추가용 템플릿
-│   └── 2026Q1/                      ← Q1 이니셔티브 (TM-xxxx 폴더)
+│   ├── _template/                   ← 이니셔티브 추가용 템플릿 (input/ 포함)
+│   ├── _kb/                         ← 지식 베이스 (Jira 티켓 없는 참조 문서)
+│   └── 2026Q1/                      ← Q1 이니셔티브 (각 폴더에 input/ + output/ 포함)
 ├── .claude/
 │   ├── agents/
 │   │   ├── confluence-reader/       ← Confluence 검색·요약 (루트 오케스트레이터 서브에이전트)
@@ -941,7 +946,7 @@ python3 discovery-intelligence-system/scripts/search_shopify.py \
 | `discovery-intelligence-system/output/market-intel.md` | 시장 분석 결과 |
 | `discovery-intelligence-system/output/discovery-synthesis.md` | 인사이트 합성 결과 |
 | `discovery-intelligence-system/output/FINAL-DISCOVERY-REPORT.md` | 최종 디스커버리 보고서 |
-| `initiatives/{분기}/{티켓}/output/` | 이니셔티브별 산출물 |
+| `input/initiatives/{분기}/{티켓}/output/` | 이니셔티브별 산출물 |
 
 ---
 
@@ -961,7 +966,7 @@ python3 discovery-intelligence-system/scripts/search_shopify.py \
 
 ## 현재 이니셔티브 현황 (2026 Q1)
 
-자세한 내용은 `initiatives/index.md` 참조.
+자세한 내용은 `input/initiatives/index.md` 참조.
 
 | 티켓 | 이니셔티브 | 상태 | 마감 |
 |------|-----------|------|------|

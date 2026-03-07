@@ -223,7 +223,7 @@ Task: 아래 PRD를 분석하여 직무별 에픽 스펙을 생성해줘.
 
 ## 6. 이니셔티브 컨텍스트 우선 참조
 
-`initiatives/index.md`에서 이니셔티브 키를 확인하고, 해당 `meta.json`의
+`input/initiatives/index.md`에서 이니셔티브 키를 확인하고, 해당 `meta.json`의
 `confluence.primary_space`를 Confluence 업로드 기본 Space로 사용한다.
 
 ---

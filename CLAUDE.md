@@ -90,31 +90,34 @@ Space: {사용자가 지정하거나 기본값: spaces.json의 priority[0]}
 
 ### 구조
 ```
-initiatives/
+input/initiatives/
 ├── index.md          ← 분기별 이니셔티브 현황 인덱스
 ├── _template/        ← 새 이니셔티브 추가용 템플릿
+├── _kb/              ← 지식 베이스 (Jira 티켓 없는 참조 문서)
 └── 2026Q1/
     └── {TICKET-ID}_{이름}/
         ├── meta.json       ← 티켓 메타(ID, 상태, 기간, 관련 Space)
         ├── context.md      ← 배경·목표·성공지표·핵심가설
         ├── decisions.md    ← 의사결정 로그
-        ├── references.md   ← Confluence/Jira/Slack 링크 모음
+        ├── references.json ← Confluence/Jira/Slack 링크 모음
         └── output/         ← 생성 산출물 (PRD, 분석 등)
 ```
+
+> **참고**: `input/` 폴더 전체가 gitignore 처리되어 있습니다. 로컬에서만 관리됩니다.
 
 ### 이니셔티브 컨텍스트 우선 참조 규칙
 
 사용자 요청에 이니셔티브 관련 키워드가 포함되면:
-1. `initiatives/index.md`에서 매칭 이니셔티브를 찾는다.
-2. 해당 이니셔티브의 `context.md`와 `references.md`를 읽어 배경을 파악한다.
+1. `input/initiatives/index.md`에서 매칭 이니셔티브를 찾는다.
+2. 해당 이니셔티브의 `context.md`와 `references.json`을 읽어 배경을 파악한다.
 3. `meta.json`의 `confluence.primary_space`를 Confluence 검색/업로드 기본 Space로 사용한다.
 4. 산출물은 해당 이니셔티브의 `output/` 폴더에도 저장한다.
 
 ### 새 이니셔티브 추가 방법
 ```
-cp -r initiatives/_template initiatives/2026Q1/{TICKET-ID}_{이름}
+cp -r input/initiatives/_template input/initiatives/2026Q1/{TICKET-ID}_{이름}
 # 이후 meta.json, context.md 등 내용 채우기
-# initiatives/index.md 테이블에 행 추가
+# input/initiatives/index.md 테이블에 행 추가
 ```
 
 ### Confluence 업로드 시 이니셔티브 Space 우선 적용
