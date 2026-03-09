@@ -46,6 +46,7 @@
 | GTM 브리프 작성 | 마케팅팀 | Skill: `/gtm` |
 | Weekly Flash 보고서 | PGM팀 | Skill: `/pgm` |
 | C레벨 보고서 품질 검토 | PGM팀 | Skill: `/report` |
+| Jira CSV → MATCH 과제 검토 · 클러스터링 | PGM팀 | Skill: `/ticket-review` |
 | 시장/제품 Discovery 분석 | 디스커버리팀 | Skill: `/discovery` |
 | UI/화면 분석 · 화면 설계서 생성 | 디스커버리팀 | Skill: `/discovery --mode web-analysis {URL}` |
 | Confluence 검색 / 조회 | 지식팀 | Agent: `confluence-reader` |
