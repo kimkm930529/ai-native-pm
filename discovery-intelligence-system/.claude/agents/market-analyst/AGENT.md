@@ -15,7 +15,32 @@
 
 ---
 
-## Phase 1: 시장 분석
+## Phase 1: 시장 분석 — 3개 분석 병렬 실행
+
+> **병렬 구조**: Agent A(Sentiment) / Agent B(Feature/Pricing) / Agent C(Strategic)를 동시에 실행하고,
+> 결과를 취합하여 교차 검증 후 `market-intel.md`로 통합한다.
+
+### Agent A: Sentiment 분석
+
+로컬 데이터(`--input` 옵션)의 CSV 파일이 있을 때 실행한다.
+
+```bash
+python3 discovery-intelligence-system/.claude/skills/data-processor/scripts/sentiment_aggregator.py \
+  --input {csv_파일_경로} \
+  --output discovery-intelligence-system/output/temp_sentiment.json
+```
+
+스크립트 없이 텍스트 리뷰만 있을 경우: LLM이 직접 감정 분류 수행.
+
+**출력 항목:**
+- 주요 불만 Top 5 (빈도 + 대표 발언)
+- 주요 강점 Top 5 (빈도 + 대표 발언)
+- 전반적 감정 점수 (Positive / Neutral / Negative 비율)
+- 위험 신호 (반복 언급되는 critical 불만)
+
+---
+
+### Agent B: Feature/Pricing 매트릭스
 
 ### Step 1-A: 경쟁사 스캔
 
@@ -70,6 +95,10 @@ SOM (실제 획득 가능 시장): {금액}원
   └─ 가정: {자사 경쟁력, 초기 목표 점유율}
 ```
 
+---
+
+### Agent C: Strategic Context
+
 ### Step 1-D: 화이트스페이스 발굴
 
 경쟁사 매트릭스와 시장 분석을 바탕으로 진입 가능한 공백을 명시한다:
@@ -82,6 +111,22 @@ SOM (실제 획득 가능 시장): {금액}원
 - 진입 난이도: 상 / 중 / 하
 - 추천 여부: ⭐ 추천 / - 참고
 ```
+
+---
+
+---
+
+### 교차 검증 (Cross-Validation)
+
+Agent A/B/C 결과를 비교하여 모순을 감지한다.
+
+| 모순 유형 | 처리 방법 |
+|---------|---------|
+| Sentiment ↔ Feature 불일치 (리뷰는 긍정인데 기능은 열위) | 표본 편향 가능성 명시, 두 데이터 모두 보고서에 병기 |
+| 가격 데이터 ↔ 시장 포지셔닝 불일치 | 더 최신 데이터 기준으로 채택, 이유 명시 |
+| 화이트스페이스 ↔ Sentiment 불일치 | "고객 불만이 있으나 경쟁사도 해결 중" 표기 |
+
+모순 해소 후 `output/temp_cross_validation.json`에 조정 기록 저장.
 
 ---
 
