@@ -27,26 +27,53 @@
 
 **노드 유형 규칙:**
 ```
-A([시작/종료])        ← 원형 (시작점, 끝점)
-B["사용자 행동"]      ← 직사각형 (사용자 입력 또는 행동)
-C["시스템 처리"]      ← 직사각형 (시스템 내부 처리)
-D{{"조건 분기"}}      ← 마름모 (Yes/No 분기)
-E[/"화면 표시"/]      ← 평행사변형 (출력/표시)
+A([시작/종료])        ← Stadium/Pill 형태 (시작점, 끝점)
+B["주요 액션"]        ← 직사각형 (핵심 프로세스 — 진한 파랑)
+C["일반 프로세스"]    ← 직사각형 (일반 처리 단계 — 중간 파랑)
+D["보조 프로세스"]    ← 직사각형 (대기/주문 등 보조 단계 — 연한 파랑)
+E{{"조건 분기"}}      ← 마름모 (Yes/No 분기 — 흰 배경 + 파란 테두리)
+F[/"화면 표시"/]      ← 평행사변형 (출력/표시)
 ```
+
+---
+
+**디자인 규칙 (컬러 팔레트 — 블루 모노톤 3단계):**
+
+| 노드 유형 | 형태 | fill | color | stroke | 사용 조건 |
+|----------|------|------|-------|--------|----------|
+| 시작/종료 | `([...])` | `#1A56DB` | `#fff` | `#1A56DB` | 플로우의 시작점·끝점 |
+| 주요 액션 | `[...]` | `#1E40AF` | `#fff` | `#1E40AF` | 핵심 처리 단계, 강조 필요한 노드 |
+| 일반 프로세스 | `[...]` | `#3B82F6` | `#fff` | `#3B82F6` | 일반적인 사용자 행동·시스템 처리 |
+| 보조 프로세스 | `[...]` | `#BFDBFE` | `#1E40AF` | `#3B82F6` | 대기·주문·외부 연동 등 보조 단계 |
+| 조건 분기 | `{{...}}` | `#ffffff` | `#1E3A8A` | `#3B82F6` | Yes/No 결정 노드 |
+| 에러/예외 | `[...]` 또는 `[/…/]` | `#ff6b6b` | `#fff` | `#ff6b6b` | 오류 안내, 예외 처리 노드 |
+
+**화살표 규칙:**
+- 정상 흐름: `-->` (실선)
+- 에러/예외 흐름: `-.->` (점선)
+- 분기 레이블: `-->|Yes|` / `-->|No|` (한국어 플로우는 `-->|예|` / `-->|아니오|`)
+
+---
 
 **표준 템플릿:**
 ```mermaid
 flowchart TD
     Start([시작]) --> UserAction["사용자 행동"]
     UserAction --> Validate{{"유효성 검사"}}
-    Validate -->|성공| Process["시스템 처리"]
-    Validate -->|실패| ErrorMsg[/"오류 안내 표시"/]
-    ErrorMsg --> UserAction
-    Process --> Result[/"결과 표시"/]
+    Validate -->|예| Process["시스템 처리"]
+    Validate -->|아니오| ErrorMsg[/"오류 안내 표시"/]
+    ErrorMsg -.-> UserAction
+    Process --> SubProc["보조 처리 단계"]
+    SubProc --> Result["결과 처리"]
     Result --> End([완료])
 
-    style ErrorMsg fill:#ff6b6b,color:#fff
-    style End fill:#51cf66,color:#fff
+    style Start fill:#1A56DB,color:#fff,stroke:#1A56DB
+    style End fill:#1A56DB,color:#fff,stroke:#1A56DB
+    style Process fill:#1E40AF,color:#fff,stroke:#1E40AF
+    style UserAction fill:#3B82F6,color:#fff,stroke:#3B82F6
+    style SubProc fill:#BFDBFE,color:#1E40AF,stroke:#3B82F6
+    style Validate fill:#ffffff,color:#1E3A8A,stroke:#3B82F6
+    style ErrorMsg fill:#ff6b6b,color:#fff,stroke:#ff6b6b
 ```
 
 **작성 후 반드시 `diagram-generator` 스킬로 문법 검증 수행.**

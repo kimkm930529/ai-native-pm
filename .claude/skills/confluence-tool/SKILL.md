@@ -84,6 +84,33 @@ URL: https://...
 
 ---
 
+## fetch_comments.py 호출 규약
+
+```bash
+python3 .claude/skills/confluence-tool/scripts/fetch_comments.py \
+  --page-id PAGE_ID \
+  [--output output/comments.md]   # 파일 저장 (미지정 시 stdout)
+  [--json]                         # JSON 형식 출력
+```
+
+**출력 (기본 마크다운):**
+```markdown
+# 댓글 목록 — 페이지 제목
+URL: https://...
+
+## [1] 홍길동 (2026-03-10)
+댓글 내용...
+
+## [2] 김철수 (2026-03-11)
+댓글 내용...
+```
+
+**반환 코드:**
+- `0` — 성공 (댓글 없어도 성공)
+- `1` — 인증 오류 또는 페이지 없음
+
+---
+
 ## 오류 처리 규칙
 
 1. `client.py`는 모든 HTTP 오류에 대해 **1회 자동 재시도** 후 실패 시 예외 발생.

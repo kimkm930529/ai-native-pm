@@ -90,5 +90,12 @@
         "space_key": "~7120209bbd1f66a6e34385957b56995ea34f89",
         "parent_folder": "개인 노트",
         "_comment": "업로드 시 이 Space의 [개인 노트] 폴더 하위에 페이지를 생성한다."
+    },
+    "core_customer": {
+        "_comment": "Meeting Agent가 회의록을 업로드하는 대상.",
+        "space_key": "membership",
+        "space_name": "Core Customer",
+        "meeting_parent_title": "MATCH 미팅 회의록",
+        "meeting_parent_id": "337517720"
     }
 }

@@ -10,17 +10,35 @@ Jira 티켓 원시 데이터와 사용자 메모를 입력받아,
 Weekly Flash Report에 들어갈 항목을 4개 카테고리로 분류하고
 각 항목의 중요도를 판단하여 `output/analysed_report.json`으로 저장하는 에이전트.
 
+이전 주 분석 결과(`analysed_report_prev.json`)가 있으면 WoW(Week-over-Week) 트렌드를 함께 생성한다.
+
 ---
 
 ## 입출력
 
-- **입력 1**: `output/jira_raw_{YYYYMMDD}.json` (jira-parser 스킬 산출물)
-- **입력 2**: `input/memo_{YYYYMMDD}.txt` (사용자 메모)
-- **출력**: `output/analysed_report.json`
+- **입력 1**: `pgm-agent-system/output/jira_raw_{YYYYMMDD}.json` (jira-parser 스킬 산출물)
+- **입력 2**: `pgm-agent-system/input/memo_{YYYYMMDD}.txt` (사용자 메모, 없으면 스킵)
+- **입력 3**: `pgm-agent-system/output/analysed_report_prev.json` (이전 주 데이터, 없으면 스킵)
+- **입력 4**: `pgm-agent-system/output/confluence_{YYYYMMDD}.md` (full 모드만, 없으면 스킵)
+- **출력**: `pgm-agent-system/output/analysed_report.json`
 
 ---
 
 ## 실행 순서
+
+### Step 0: 체크포인트 및 이전 주 데이터 로드
+
+```
+1. pgm-agent-system/output/.pipeline_state.json 확인
+   - "analyst": "done" 이면 → 기존 analysed_report.json 재사용, 즉시 반환
+   - "done"이 아니면 → 계속 진행
+
+2. analysed_report_prev.json 존재 여부 확인
+   - 있으면: summary_stats 로드 → WoW 비교용 prev_stats 저장
+   - 없으면: WoW 섹션 생략 (첫 실행으로 처리)
+```
+
+---
 
 ### Step 1: 데이터 로드
 
@@ -111,9 +129,35 @@ Jira 티켓이 아래 조건을 **모두** 만족할 때:
 
 ---
 
-### Step 5: 출력 파일 저장
+### Step 5: WoW 트렌드 생성 (이전 주 데이터 있을 때)
 
-분류 결과를 `output/analysed_report.json`에 저장한다.
+`analysed_report_prev.json`의 `summary_stats`와 현재 주를 비교한다.
+
+```json
+"wow_trend": {
+  "done_count_change": +2,           // 이번 주 완료 건수 - 지난 주 완료 건수
+  "done_sp_change": +5,              // 이번 주 완료 SP - 지난 주 완료 SP
+  "blocks_change": -1,               // 이번 주 블로커 수 - 지난 주 블로커 수
+  "persistent_blocks": ["MATCH-126"],// 지난 주에도 블로커였던 티켓 (2주 연속)
+  "summary": "완료 속도 +2건(+18%), 블로커 1건 해소 — 전반적 개선 추세"
+}
+```
+
+**지속 블로커 감지**: `blocks[]`의 키가 `analysed_report_prev.json`의 `blocks[]`에도 있으면 → `persistent_blocks[]`에 추가 + 경고 메시지.
+
+---
+
+### Step 6: 출력 파일 저장
+
+**저장 전**: 기존 `analysed_report.json`이 있으면 `analysed_report_prev.json`으로 복사 후 덮어쓴다.
+
+분류 결과를 `pgm-agent-system/output/analysed_report.json`에 저장한다.
+
+**파이프라인 상태 업데이트**:
+```json
+// .pipeline_state.json의 analyst 단계를 "done"으로 변경
+{ "analyst": { "status": "done", "artifact": "output/analysed_report.json" } }
+```
 
 ---
 
@@ -129,6 +173,13 @@ Jira 티켓이 아래 조건을 **모두** 만족할 때:
     "total_blocks": 1,
     "total_next_week": 4,
     "done_story_points": 18
+  },
+  "wow_trend": {
+    "done_count_change": 2,
+    "done_sp_change": 5,
+    "blocks_change": -1,
+    "persistent_blocks": [],
+    "summary": "WoW 요약 한 줄"
   },
   "achievements": [
     {
@@ -150,7 +201,9 @@ Jira 티켓이 아래 조건을 **모두** 만족할 때:
       "story_points": 3,
       "score": 2,
       "is_featured": false,
-      "progress_note": "현재 진행 상황 한 줄 (메모에서 발췌 또는 상태 기반)",
+      "progress_note": "현재 진행 상황 한 줄",
+      "estimated_due": "YYYY-MM-DD",
+      "next_week_progress_pct": 70,
       "source": "jira"
     }
   ],
@@ -168,10 +221,11 @@ Jira 티켓이 아래 조건을 **모두** 만족할 때:
     {
       "key": "MATCH-126",
       "summary": "티켓 제목",
-      "block_reason": "블로커 사유 (linked_issue 또는 메모 기반)",
+      "block_reason": "블로커 사유",
       "score": 5,
       "is_featured": true,
       "owner": "담당자명 (있으면)",
+      "is_persistent": false,
       "source": "jira"
     }
   ],
@@ -191,12 +245,15 @@ Jira 티켓이 아래 조건을 **모두** 만족할 때:
 
 > **참고**: `agenda_items`와 `slack_short_summary` 필드는 analyst가 빈 값으로 초기화하고,
 > `minutes-generator` 에이전트가 실행 후 채워 넣는다.
+> `wow_trend`는 `analysed_report_prev.json`이 없으면 `null`로 설정.
 
 ---
 
 ## 특화 지침
 
-- **중복 분류 금지**: 한 티켓은 하나의 카테고리에만 속한다. Blocks 우선 > Achievements > Status > Next Week 순으로 적용.
-- **메모 항목 처리**: Jira 티켓과 연결된 메모(티켓 ID 언급)는 해당 티켓의 `highlight` 또는 `progress_note`에 병합. 독립 메모는 `memo_items[]`로 분리.
-- **highlight 작성**: 티켓 summary + 메모 내용을 결합하여 보고서에 바로 사용할 수 있는 1~2줄 한국어 요약. 기술 용어(API, 배치, 파이프라인) 대신 비즈니스 언어로 서술.
-- **`is_featured: true` 항목은 카테고리당 최대 3개**: 점수 상위 3개에만 부여.
+- **중복 분류 금지**: 한 티켓은 하나의 카테고리에만. Blocks > Achievements > Status > Next Week 우선순위.
+- **메모 항목 처리**: Jira 티켓과 연결된 메모는 해당 티켓의 `highlight`/`progress_note`에 병합. 독립 메모는 `memo_items[]` 분리.
+- **highlight 작성**: 티켓 summary + 메모 결합, 비즈니스 언어로 1~2줄 한국어 요약.
+- **`is_featured: true` 항목은 카테고리당 최대 3개**.
+- **지속 블로커 경고**: `is_persistent: true` 항목은 analyst 완료 메시지에 강조 표시:
+  > ⚠️ 지속 블로커 감지: {키} — {요약} (2주 이상 미해결)

@@ -1,264 +1,336 @@
-# Weekly Flash Report — Main Orchestrator (CLAUDE.md)
+# PGM Command Center — 오케스트레이터
 
 ## 역할
 
-Jira 티켓과 사용자 메모를 결합하여 핵심 성과 위주의 Weekly Flash Report를 생성하고,
-Markdown / Gmail 초안 / Google Docs 초안 3가지 포맷으로 자동 배포(초안)하는 오케스트레이터.
-아울러 핵심 아젠다를 선별하여 Google Docs 회의록 초안과 Slack 사전 아젠다 요약을 함께 생성한다.
+PM의 주간 업무 전반을 처리하는 통합 허브.
+Jira 성과 분석, 회의록 처리, Jira 코멘트 게시, 보고서 배포를 단일 파이프라인으로 연결한다.
+
+> 공통 규약: `../CONVENTIONS.md`
 
 ---
 
-## 1. 입력 수신
+## 실행 모드
 
-### 지원 입력 형식
+| 모드 | 커맨드 | 용도 |
+|------|--------|------|
+| **flash** | `/pgm [JIRA_KEY] [메모]` | Weekly Flash Report만 생성 (Jira 데이터 기반) |
+| **weekly** | `/pgm --weekly [CONFLUENCE_URL]` | 회의록 → Jira Initiative 코멘트 게시만 |
+| **full** | `/pgm --full [JIRA_KEY] [CONFLUENCE_URL] [메모]` | Flash + 회의록 + Jira 코멘트 전부 |
 
-| 입력 유형 | 처리 방법 |
-|----------|----------|
-| Jira 프로젝트 키 지정 | `jira-parser` 스킬 호출 → API로 이번 주 티켓 수집 |
-| 사용자 메모 텍스트 | 직접 텍스트 수신, `input/memo_{YYYYMMDD}.txt`로 저장 |
-| 두 가지 모두 | 병렬 수집 후 합산 |
-
-**입력 미제공 시:**
-> "어떤 Jira 프로젝트를 대상으로 할까요? 프로젝트 키(예: MATCH, CME)를 알려주세요.
-> 추가할 개인 메모가 있으면 함께 붙여넣어 주세요."
+모드 미지정 시 → `flash` 모드로 동작.
 
 ---
 
-## 2. 전체 워크플로우
+## 전체 데이터 플로우
 
 ```
-사용자 요청 (Jira 프로젝트 키 + 메모)
+/pgm --full MATCH https://confluence-url "선택 메모"
     │
     ▼
-[Step 1: Data Ingestion]
-   jira-parser 스킬 호출 → 이번 주 Done/In Progress/Blocked 티켓 수집
-   메모 텍스트 → input/memo_{YYYYMMDD}.txt 저장
+[Step 0: 체크포인트 확인]
+  .pipeline_state.json 존재 시 → 완료 단계 스킵, 실패 단계부터 재개
     │
     ▼
-[Step 2: analyst 서브에이전트 호출]
-   Jira 데이터 + 메모를 분류 및 우선순위 판단
-   결과: output/analysed_report.json
+[Step 1: 데이터 수집] ← 병렬 실행
+  ├── jira-parser 스킬 → output/jira_raw_{YYYYMMDD}.json
+  └── fetch_page.py → output/confluence_{YYYYMMDD}.md  (weekly/full 모드만)
     │
     ▼
-[Step 3: publisher 서브에이전트 호출]
-   분류된 데이터를 3가지 포맷으로 변환 및 API 전송
-   결과:
-     ├─ output/flash_{YYYYMMDD}.md  (로컬 마크다운)
-     ├─ Google Docs 초안 URL
-     └─ Gmail 초안 ID
+[Step 2: analyst 서브에이전트]  (flash/full 모드)
+  입력: jira_raw + 메모 + [confluence_md]
+  출력: output/analysed_report.json
+        ← 이전 주 데이터(analysed_report_prev.json) 있으면 WoW 트렌드 포함
     │
     ▼
-[Step 3-B: minutes-generator 서브에이전트 호출] ← publisher와 병렬 실행 가능
-   핵심 아젠다 선별 → 회의록 초안 + Slack 요약 생성
-   결과:
-     ├─ output/meeting_minutes_{YYYYMMDD}.md  (회의록 마크다운)
-     ├─ Google Docs 회의록 초안 URL
-     └─ output/slack_summary_{YYYYMMDD}.txt  (Slack 공유용 텍스트)
+[Step 3: publisher + minutes-generator] ← 병렬 실행  (flash/full 모드)
+  publisher:
+    ├── output/flash_{YYYYMMDD}.md
+    ├── Google Docs 초안 URL
+    └── Gmail Draft ID
+  minutes-generator:
+    ├── output/meeting_minutes_{YYYYMMDD}.md
+    ├── Google Docs 회의록 URL
+    └── output/slack_summary_{YYYYMMDD}.txt
     │
     ▼
-[Step 4: Self-Validation]
-   Flash Report + 회의록 + Slack 요약 산출물 완비 여부 확인
+[Step 4: weekly-poster]  (weekly/full 모드)
+  confluence_md에서 Initiative별 항목 파싱 (AI 분석)
+  → 마크다운 미리보기 → 사용자 승인
+  → output/weekly_draft_{YYYYMMDD}.json 생성
+  → post_weekly_comment.py 실행 → Jira 코멘트 게시
+  → output/weekly_result_{YYYYMMDD}.json
     │
-    ├─ 통과 → 완료 출력
-    └─ 실패 → 해당 단계 재호출 (최대 2회)
+    ▼
+[Step 5: Self-Validation + Artifacts 갱신]
+  _artifacts.json 업데이트
+  12개 체크리스트 검증
 ```
-
-### 중간 산출물 위치
-
-| 파일 | 생성 주체 | 용도 |
-|------|---------|------|
-| `output/analysed_report.json` | analyst | 분류·우선순위 결과 캐시 (agenda_items·slack_short_summary 포함) |
-| `output/flash_{YYYYMMDD}.md` | publisher | 로컬 Flash Report 마크다운 최종본 |
-| `output/meeting_minutes_{YYYYMMDD}.md` | minutes-generator | 회의록 초안 마크다운 |
-| `output/slack_summary_{YYYYMMDD}.txt` | minutes-generator | Slack 사전 아젠다 요약 텍스트 |
-| `input/memo_{YYYYMMDD}.txt` | orchestrator | 사용자 메모 임시 저장 |
 
 ---
 
-## 3. 서브에이전트 호출 규약
+## Step 0: 체크포인트 확인
 
-### analyst 호출
+실행 시작 시 `output/.pipeline_state.json`을 확인한다.
+
+- 파일이 없거나 `date` 필드가 오늘과 다르면 → **새 실행** (모든 단계 pending으로 초기화)
+- `date`가 오늘과 같으면 → **재실행** 모드:
+  - `"done"` 단계: 스킵 (기존 산출물 재사용)
+  - `"failed"` / `"pending"` 단계: 해당 단계부터 실행
+  - 사용자에게 알림: "이전 실행 감지. [완료 단계] 스킵, [미완료 단계]부터 재개합니다."
+
+파이프라인 상태 파일 형식: `CONVENTIONS.md §6` 참조.
+
+---
+
+## Step 1: 데이터 수집
+
+### 1-A: Jira 데이터 (flash/full 모드)
+
+```bash
+cd /Users/musinsa/Documents/agent_project/pm-studio && \
+python3 pgm-agent-system/.claude/skills/jira-parser/scripts/parse_jira.py \
+  --project {JIRA_KEY} \
+  --week-offset 0 \
+  --output pgm-agent-system/output/jira_raw_{YYYYMMDD}.json
+```
+
+### 1-B: Confluence 회의록 (weekly/full 모드)
+
+URL 패턴에서 PAGE_ID 추출:
+- `https://*.atlassian.net/wiki/spaces/*/pages/{PAGE_ID}/...` → PAGE_ID 추출
+
+```bash
+cd /Users/musinsa/Documents/agent_project/pm-studio && \
+python3 .claude/skills/confluence-tool/scripts/fetch_page.py \
+  --page-id {PAGE_ID} \
+  --format markdown \
+  --output pgm-agent-system/output/confluence_{YYYYMMDD}.md
+```
+
+**입력 미제공 시**:
+> "어떤 Jira 프로젝트를 대상으로 할까요? (예: MATCH, CME)
+> 이번 주 회의록 Confluence URL도 있으면 함께 주세요."
+
+---
+
+## Step 2: analyst 서브에이전트 호출
 
 ```
-Task: 아래 Jira 데이터와 사용자 메모를 분석하여 Weekly Flash 항목으로 분류하고 우선순위를 판단해줘.
-에이전트 스펙: .claude/agents/analyst/AGENT.md 참조
+Task: 아래 데이터를 분석하여 Weekly Flash 항목을 분류하고 우선순위를 판단해줘.
+      이전 주 분석 결과가 있으면 WoW 트렌드를 함께 생성해줘.
+에이전트 스펙: .claude/agents/analyst/AGENT.md
 
 입력:
-  - Jira 원시 데이터: [jira-parser 스킬 반환값 또는 파일 경로]
-  - 사용자 메모: input/memo_{YYYYMMDD}.txt
+  - Jira 원시 데이터: pgm-agent-system/output/jira_raw_{YYYYMMDD}.json
+  - 사용자 메모: pgm-agent-system/input/memo_{YYYYMMDD}.txt (있으면)
+  - 이전 주 데이터: pgm-agent-system/output/analysed_report_prev.json (있으면)
+  - Confluence 회의록: pgm-agent-system/output/confluence_{YYYYMMDD}.md (full 모드만)
 
-출력: output/analysed_report.json
+출력: pgm-agent-system/output/analysed_report.json
 ```
+
+---
+
+## Step 3: publisher + minutes-generator 병렬 호출
+
+analyst 완료 후 두 에이전트를 **동시에** 호출한다.
 
 ### publisher 호출
 
 ```
-Task: 아래 분석 결과를 3가지 포맷(Markdown, Google Docs, Gmail)으로 변환하고
-각 채널의 API 초안을 생성해줘.
-에이전트 스펙: .claude/agents/publisher/AGENT.md 참조
+Task: analysed_report.json을 3가지 포맷(Markdown, Google Docs, Gmail)으로 변환해줘.
+에이전트 스펙: .claude/agents/publisher/AGENT.md
 
-입력: output/analysed_report.json
+입력: pgm-agent-system/output/analysed_report.json
 출력:
-  - output/flash_{YYYYMMDD}.md
+  - pgm-agent-system/output/flash_{YYYYMMDD}.md
   - Google Docs 초안 URL
-  - Gmail 초안 ID
+  - Gmail Draft ID
 ```
 
 ### minutes-generator 호출
 
 ```
-Task: 아래 분석 결과에서 핵심 아젠다를 선별하고
-Google Docs 회의록 초안과 Slack 사전 아젠다 요약을 생성해줘.
-에이전트 스펙: .claude/agents/minutes-generator/AGENT.md 참조
+Task: analysed_report.json에서 핵심 아젠다를 선별하고 회의록 초안과 Slack 요약을 생성해줘.
+에이전트 스펙: .claude/agents/minutes-generator/AGENT.md
 
-입력: output/analysed_report.json
+입력: pgm-agent-system/output/analysed_report.json
 출력:
-  - output/meeting_minutes_{YYYYMMDD}.md
-  - Google Docs 회의록 초안 URL
-  - output/slack_summary_{YYYYMMDD}.txt
+  - pgm-agent-system/output/meeting_minutes_{YYYYMMDD}.md
+  - Google Docs 회의록 URL
+  - pgm-agent-system/output/slack_summary_{YYYYMMDD}.txt
 ```
 
-> **병렬 실행 허용**: publisher와 minutes-generator는 동일한 `analysed_report.json`을 읽으므로
-> analyst 완료 후 두 에이전트를 동시에 호출할 수 있다.
+---
 
-### jira-parser 스킬 호출
+## Step 4: weekly-poster (weekly/full 모드)
 
+### 4-A: Initiative별 파싱 (AI 분석)
+
+`confluence_{YYYYMMDD}.md` 전문을 분석하여 각 Jira Initiative(TM-XXXX)별로 논의 내용 추출.
+
+**Initiative 식별**:
+- 회의록에 명시된 `TM-XXXX` 직접 추출
+- 이니셔티브명만 언급된 경우 `input/initiatives/index.md`에서 매핑
+
+**섹션 분류 기준**:
+
+| 항목 | 분류 기준 |
+|------|----------|
+| 지난주 진행상황 | 완료된 작업, 진행된 미팅, 결정된 사항, 배포/릴리스 내용 |
+| Action Item (이번주) | 다음 액션, ETA가 있는 작업, 담당자 배정 태스크, 후속 논의 필요 사항 |
+
+**항목 작성 규칙**:
+- 각 항목 1줄 요약 (50자 이내)
+- ETA 있으면 포함: `기능 X 개발 완료 (ETA: 3/15)`
+- 담당자 명시 시 포함: `API 설계 문서 작성 (담당: 홍길동)`
+- Jira 티켓 언급 시 sub 항목으로:
+  ```json
+  { "text": "추천 알고리즘 개선 완료", "sub": ["PSN-704: 스케줄링 시스템 고도화"] }
+  ```
+
+### 4-B: 마크다운 미리보기 + 사용자 승인
+
+```
+[PGM] 회의록 분석 완료 — {N}주차
+
+---
+### TM-XXXX — {이니셔티브명}
+
+**지난주 진행상황**
+- 항목1
+- 항목2
+
+**Action Item (이번주)**
+- 항목1 (ETA: MM/DD)
+
+---
+총 {N}개 Initiative, {M}개 항목 추출.
+Jira Weekly 코멘트를 게시할까요? (수정 내용이 있으면 말씀해주세요)
+```
+
+**반드시 사용자 승인 후 게시** — 게시는 되돌리기 어렵다.
+
+### 4-C: weekly_draft.json 생성 및 Jira 게시
+
+승인 후 JSON 생성:
+```json
+{
+  "week": 10,
+  "source_url": "https://...",
+  "generated_at": "2026-03-09",
+  "updates": [
+    {
+      "ticket": "TM-2055",
+      "initiative_name": "MATCH Phase2 - Foundation",
+      "prev_week": ["항목1", { "text": "항목2", "sub": ["PSN-xxx"] }],
+      "action_items": ["항목1 (ETA: MM/DD)"]
+    }
+  ]
+}
+```
+
+저장: `pgm-agent-system/output/weekly_draft_{YYYYMMDD}.json`
+
+Jira 코멘트 게시:
 ```bash
-python3 .claude/skills/jira-parser/scripts/parse_jira.py \
-  --project {PROJECT_KEY} \
-  --week-offset 0 \
-  --output output/jira_raw_{YYYYMMDD}.json
+cd /Users/musinsa/Documents/agent_project/pm-studio && \
+python3 .claude/skills/weekly-updater/scripts/post_weekly_comment.py \
+  --input pgm-agent-system/output/weekly_draft_{YYYYMMDD}.json
 ```
+
+결과: `pgm-agent-system/output/weekly_result_{YYYYMMDD}.json`
 
 ---
 
-## 4. 문서 작성 원칙 (Writing Rules)
+## Step 5: Self-Validation + Artifacts 갱신
 
-Flash Report 작성 시 아래 원칙을 반드시 준수한다.
-
-### WR-1: 문서 최상단에 Health Status 표기
-
-Executive Summary 바로 위 또는 안에 전체 프로젝트 상태를 한 줄로 표시한다.
-
-```
-| 전체 상태 | 🟢 정상 진행 | 계획 대비 차질 없음 |
-| 전체 상태 | 🟡 주의 필요 | {1줄 이유} |
-| 전체 상태 | 🔴 긴급 대응 필요 | {1줄 이유} |
-```
-
-판단 기준:
-- 🟢 Green: 계획 일정 내 진행 중, 블로커 없음
-- 🟡 Yellow: 일정 지연 위험 또는 해결 중인 이슈 존재
-- 🔴 Red: 블로커로 인해 일정 영향 확실, 즉각 의사결정 필요
-
-### WR-2: Task 완료율은 반드시 맥락과 함께 표기
-
-단순 퍼센트만 쓰지 않는다. 현재 완료 수 + 차주 예상 완료 수를 함께 표기한다:
-
-```
-현재: {N}개 중 {n}개 완료 ({%}) — {현재 Phase 기준 진행 상태 한 줄}
-차주 예상: {n+x}개 완료 (+{x}개) — {완료 예정 Task 목록 간략 서술}
-```
-
-차주 예상 완료 수 산출 방법:
-1. "진행 중" Task 중 Due가 차주 내인 것 → 완료로 카운트
-2. "Next Week" 계획 중 완료가 확정적인 마일스톤 Task → 완료로 카운트
-3. "Not Started"였으나 이미 실행된 Task → 완료로 카운트
-
-예시:
-> 현재: 38개 중 24개 완료 (63.2%) — Phase 3까지 예정 Task 모두 완료, 현재 지연 없음
-> 차주 예상: 28개 완료 (+4개) — 대시보드 설정 완료, Phase 3.5 런칭 Task 3건(1% 런칭·기대치 정렬·Full Ramp) 완료 예정
-
-### WR-3: 이슈·블로커는 "누가 / 언제까지 / 무엇을" 형식으로 작성
-
-- 섹션명은 "Blocks/리스크" 대신 **"이슈 & 조치 사항"** 으로 표기
-- "영향도 중/고/저" 같은 내부 용어 사용 금지
-- 각 항목은 반드시 담당자 + 기한 + 구체적 액션을 명시
-
-```
-| 이슈 | 현재 상태 | 필요 조치 | 담당 | 기한 |
-```
-
-예시:
-> | 프로모션 일정 미공유 | Auxia가 향후 프로모 일정을 모름 → 모델 최적화 불가 | 주간 미팅 전 프로모 캘린더 공유 | 무신사 마케팅팀 | 매주 월요일 |
-
-### WR-5: 진행 중 Task에 차주 예상 진척률 표기
-
-"진행 중" 항목은 예상 Due를 기반으로 차주 말 기준 진척률을 함께 표시한다.
-
-```
-| 항목 | 담당 | 예상 Due | 차주 예상 진척 |
-|------|------|---------|--------------|
-| {Task명} | {담당} | {날짜 또는 "TBD"} | {%} — {한 줄 근거} |
-```
-
-진척률 판단 기준:
-- Due가 차주 내: 완료 예상 → **100%**
-- Due가 2주 이후: 착수 또는 일부 완료 → Due까지 남은 기간 대비 비율로 추정
-- Due 불명확: "착수 예정" 또는 "진행 중 (Due TBD)"으로 표기
-
-예시:
-> | 대시보드 설정 | Charles/Jae | 3/7 (EOW) | **100%** — 이번 주 내 완료 예정, 차주 Walk-through 진행 |
-> | In-App SDK 통합 개발 | Kyungmin | 3/9 시작 → 3/20 테스트 | **20%** — 차주 개발 착수, 테스트는 3/20까지 |
-
----
-
-### WR-4: 맥락 없이 등장하는 섹션 금지
-
-새로운 섹션(채널 전략, 실험 설계 등)을 추가할 때는 반드시 첫 줄에 **왜 이 내용이 이 문서에 있는지** 한 문장으로 설명한다.
-
-예시:
-> *(이번 주 정기 미팅에서 채널별 역할이 처음 정의됨. 향후 운영 기준으로 활용할 내용이므로 기록함.)*
-
----
-
-## 5. Self-Validation 체크리스트
+### Self-Validation 체크리스트
 
 | # | 검증 항목 | 통과 기준 | 재호출 대상 |
 |---|----------|----------|------------|
-| 1 | 산출물 3종 완비 (Flash) | MD + Docs URL + Gmail ID 모두 존재 | publisher |
-| 2 | 핵심 수치 볼드 처리 | `**숫자**` 패턴 MD 파일 내 1개 이상 | publisher |
-| 3 | 명사형 종결 어미 | 메일 본문 문장이 `~함`, `~완료`, `~예정`으로 종결 | publisher |
-| 4 | 카테고리 4종 완비 | Achievements / Status / Next Week / 이슈&조치 섹션 모두 존재 | analyst |
-| 5 | 우선 항목 존재 | `⭐ 핵심` 태그 항목이 1개 이상 | analyst |
-| 6 | Health Status 표기 | 🟢/🟡/🔴 + 판단 근거 1줄 존재 | publisher |
-| 7 | Task 완료 현황 — 현재+차주 형식 | "현재 N개 완료 / 차주 예상 N+x개" 양식으로 표기됨 | analyst |
-| 8 | 진행 중 Task — 차주 진척률 표기 | 진행 중 항목에 예상 Due + 차주 예상 % 존재 | analyst |
-| 9 | 이슈 섹션 — 담당/기한/액션 완비 | 이슈 항목마다 담당자·기한·구체 액션 3개 필드 존재 | analyst |
-| 10 | 회의록 산출물 완비 | meeting_minutes MD + Docs URL 존재 | minutes-generator |
-| 11 | Slack 요약 완비 | slack_summary txt 파일 존재 + 200자 이내 | minutes-generator |
-| 12 | 아젠다 항목 존재 | agenda_items 배열에 1개 이상 존재 | minutes-generator |
+| 1 | Flash MD 존재 | `flash_{YYYYMMDD}.md` 파일 존재 | publisher |
+| 2 | 핵심 수치 볼드 | `**숫자**` 패턴 1개 이상 | publisher |
+| 3 | 명사형 종결 어미 | `~함`, `~완료`, `~예정`, `~중` | publisher |
+| 4 | 카테고리 4종 완비 | Achievements / Status / Next Week / 이슈&조치 | analyst |
+| 5 | 핵심 항목 존재 | `⭐ 핵심` 태그 항목 1개 이상 | analyst |
+| 6 | Health Status 표기 | 🟢/🟡/🔴 + 판단 근거 1줄 | publisher |
+| 7 | Task 완료 현황 형식 | "현재 N개 완료 / 차주 예상 N+x개" | analyst |
+| 8 | 진행 중 Task 진척률 | 진행 중 항목에 예상 Due + 차주 예상 % | analyst |
+| 9 | 이슈 섹션 완비 | 담당자·기한·구체 액션 3개 필드 | analyst |
+| 10 | 회의록 산출물 완비 | meeting_minutes MD + Docs URL (full 모드만) | minutes-generator |
+| 11 | Slack 요약 완비 | slack_summary txt + 200자 이내 (full 모드만) | minutes-generator |
+| 12 | Weekly 코멘트 게시 | weekly_result JSON 존재 (weekly/full 모드만) | — |
 
-2회 재시도 후 실패한 항목은 `[TBD]`로 표시하고 터미널에 에러 로그를 출력한다.
+2회 재시도 후 실패 항목은 `[TBD]` 표시 후 사용자에게 보고.
+
+### Artifacts 갱신
+
+완료 후 `output/_artifacts.json` 업데이트:
+```json
+{
+  "date": "YYYYMMDD",
+  "week": {ISO_WEEK},
+  "flash_md": "pgm-agent-system/output/flash_{YYYYMMDD}.md",
+  "meeting_minutes_md": "pgm-agent-system/output/meeting_minutes_{YYYYMMDD}.md",
+  "weekly_draft_json": "pgm-agent-system/output/weekly_draft_{YYYYMMDD}.json",
+  "jira_raw_json": "pgm-agent-system/output/jira_raw_{YYYYMMDD}.json",
+  "analysed_report_json": "pgm-agent-system/output/analysed_report.json",
+  "google_docs_flash_url": "{URL 또는 null}",
+  "google_docs_minutes_url": "{URL 또는 null}",
+  "gmail_draft_id": "{ID 또는 null}",
+  "weekly_result_json": "pgm-agent-system/output/weekly_result_{YYYYMMDD}.json"
+}
+```
 
 ---
 
-## 5. 완료 출력 형식
+## 완료 출력 형식
 
+### flash 모드
 ```
-✅ Weekly Flash Report + 회의록 생성 완료!
+✅ Weekly Flash Report 생성 완료!
 
 [Flash Report]
-📄 Markdown: output/flash_{YYYYMMDD}.md
-📝 Google Docs: {Flash Docs URL}
+📄 Markdown: pgm-agent-system/output/flash_{YYYYMMDD}.md
+📝 Google Docs: {URL}
+📧 Gmail 초안: {Draft ID}
+
+⭐ 핵심 성과 (상위 3건):
+1. {키} — {제목}
+2. {키} — {제목}
+3. {키} — {제목}
+```
+
+### weekly 모드
+```
+✅ Weekly Jira 코멘트 게시 완료! — {N}주차
+
+✅ TM-XXXX — {이니셔티브명}
+   → {Jira 코멘트 URL}
+✅ TM-YYYY — {이니셔티브명}
+   → {Jira 코멘트 URL}
+
+📁 결과: pgm-agent-system/output/weekly_result_{YYYYMMDD}.json
+```
+
+### full 모드
+```
+✅ PGM 전체 파이프라인 완료! — {N}주차
+
+[Flash Report]
+📄 Markdown: pgm-agent-system/output/flash_{YYYYMMDD}.md
+📝 Google Docs: {URL}
 📧 Gmail 초안: {Draft ID}
 
 [Meeting Minutes]
-📋 Markdown: output/meeting_minutes_{YYYYMMDD}.md
-📝 Google Docs (회의록): {Minutes Docs URL}
-💬 Slack 요약: output/slack_summary_{YYYYMMDD}.txt
+📋 Markdown: pgm-agent-system/output/meeting_minutes_{YYYYMMDD}.md
+📝 Google Docs (회의록): {URL}
+💬 Slack 요약: pgm-agent-system/output/slack_summary_{YYYYMMDD}.txt
 
----
-검증 결과:
-✅ Flash 산출물 3종 완비   ✅ 핵심 수치 볼드
-✅ 명사형 종결 어미        ✅ 카테고리 4종 완비
-✅ 우선 항목 존재          ✅ 회의록 산출물 완비
-✅ Slack 요약 완비         ✅ 아젠다 항목 존재
-
-⭐ 핵심 성과 (상위 3건):
-1. {티켓 ID} — {제목}
-2. {티켓 ID} — {제목}
-3. {티켓 ID} — {제목}
+[Weekly Jira 코멘트]
+✅ TM-XXXX — {이니셔티브명} → {URL}
+✅ TM-YYYY — {이니셔티브명} → {URL}
 
 📢 Slack 아젠다 미리보기:
 {slack_summary 첫 4줄}
@@ -266,15 +338,47 @@ Executive Summary 바로 위 또는 안에 전체 프로젝트 상태를 한 줄
 
 ---
 
-## 6. 오류 처리
+## 문서 작성 원칙 (Writing Rules)
 
-| 오류 유형 | 처리 방법 |
+→ `CONVENTIONS.md §4` 참조
+
+### WR-1: Health Status 표기 (보고서 최상단)
+
+```
+| 전체 상태 | 🟢 정상 진행 | 계획 대비 차질 없음 |
+```
+
+### WR-2: Task 완료율 — 현재+차주 형식
+
+```
+현재: {N}개 중 {n}개 완료 ({%}) — {상태 한 줄}
+차주 예상: {n+x}개 완료 (+{x}개) — {완료 예정 Task 간략 서술}
+```
+
+### WR-3: 이슈·블로커 — 담당/기한/액션 형식
+
+```
+| 이슈 | 현재 상태 | 필요 조치 | 담당 | 기한 |
+```
+
+### WR-4: 맥락 없는 섹션 추가 금지
+
+새 섹션 추가 시 첫 줄에 "왜 이 내용이 이 문서에 있는지" 한 문장 설명.
+
+### WR-5: 진행 중 Task에 차주 예상 진척률 표기
+
+```
+| 항목 | 담당 | 예상 Due | 차주 예상 진척 |
+```
+
+---
+
+## 오류 처리
+
+→ `CONVENTIONS.md §3` 참조
+
+| 추가 오류 | 처리 방법 |
 |----------|----------|
-| Jira API 인증 실패 (401) | "JIRA_API_TOKEN 환경변수를 확인해주세요." 후 중단 |
-| Jira 티켓 0건 | "이번 주 처리된 티켓이 없습니다. 날짜 범위를 확인할까요?" |
-| Google Docs API 실패 | 해당 단계 스킵, MD 파일 경로 안내 후 계속 진행 |
-| Gmail API 실패 | 해당 단계 스킵, 본문 텍스트를 터미널에 출력 |
-| publisher 2회 실패 | `output/flash_{YYYYMMDD}.md` 경로 안내 + 수동 복사 안내 |
-| Google Docs API 실패 (회의록) | 해당 단계 스킵, MD 파일 경로 안내 후 계속 진행 |
-| Slack Webhook 실패 | 터미널에 요약 텍스트 출력 + `output/slack_summary_{YYYYMMDD}.txt` 경로 안내 |
-| minutes-generator 2회 실패 | `output/meeting_minutes_{YYYYMMDD}.md` 경로 안내 + 수동 업로드 안내 |
+| Initiative 키 없음 (weekly) | 회의록에서 TM-XXXX 미발견 시 사용자에게 직접 입력 요청 |
+| 항목이 너무 많음 (10개+) | "항목이 많습니다. 핵심 항목만 포함할까요?" 확인 |
+| 특정 티켓 게시 실패 | 해당 티켓 skip + 결과에 오류 표시, 나머지 계속 |

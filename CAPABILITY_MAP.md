@@ -93,58 +93,90 @@ PRD가 있어야 실행 가능. PRD 없으면 기획팀 먼저 호출.
 
 ---
 
-## [PGM팀] 성과 보고
+## [PGM팀] PM Command Center
 
 ### 역할
-주간 성과 데이터를 수집·정리하고, C레벨 보고 가능 품질의 보고서를 생성·검토한다.
+PM의 주간 업무 전반을 담당하는 통합 허브.
+Jira 성과 분석, 회의록 처리, Initiative 코멘트 게시, 보고서 배포, 과제 분류를 단일 파이프라인으로 연결한다.
 
 ### 팀원 구성
 | 역할 | 호출 방법 | 모델 |
 |------|----------|------|
-| Weekly Flash 생성 | Skill: `/pgm` | claude-sonnet-4-6 |
+| PGM Command Center (통합) | Skill: `/pgm` | claude-sonnet-4-6 |
+| Weekly Flash 생성 | Skill: `/pgm [JIRA_KEY]` | claude-sonnet-4-6 |
+| 회의록 → Jira 코멘트 | Skill: `/pgm --weekly [URL]` | claude-sonnet-4-6 |
+| Flash + 회의록 + 코멘트 통합 | Skill: `/pgm --full [KEY] [URL]` | claude-sonnet-4-6 |
 | C레벨 보고서 검토 | Skill: `/report` | claude-sonnet-4-6 |
-| 과제 검토 (CSV → MATCH 분류) | Skill: `/ticket-review` | claude-sonnet-4-6 |
+| 과제 검토 (MATCH 분류) | Skill: `/ticket-review` | claude-sonnet-4-6 |
 
 ### 트리거 키워드
-Weekly Flash, 주간 보고, 성과 정리, KPI, 이번 주 결과, 보고서 검토, C레벨, 결재, 품질 검토, 반려, 과제 검토, 티켓 분류, CSV 분석, MATCH 과제
+Weekly Flash, 주간 보고, 성과 정리, KPI, 이번 주 결과, 회의록, 미팅 정리, Jira 업데이트,
+보고서 검토, C레벨, 결재, 과제 검토, 티켓 분류, MATCH 과제
 
 ### 세부 역량
 
-#### Weekly Flash 생성 (`/pgm`)
-- **입력**: Jira 프로젝트 키 (MATCH, CME, TM 등) + 선택적 메모 텍스트
-- **출력**: `pgm-agent-system/output/flash_{YYYYMMDD}.md`
-- **특징**: Jira 진행 상황 + Confluence 성과 문서 결합하여 보고서 생성
-- **실행**: `pgm-agent-system/CLAUDE.md` 워크플로우 따름
+#### PGM 통합 실행 (`/pgm --full`)
+- **입력**: Jira 프로젝트 키 + Confluence 회의록 URL + 선택적 메모
+- **출력**:
+  - `pgm-agent-system/output/flash_{YYYYMMDD}.md` + Google Docs + Gmail
+  - `pgm-agent-system/output/meeting_minutes_{YYYYMMDD}.md` + Google Docs
+  - `pgm-agent-system/output/slack_summary_{YYYYMMDD}.txt`
+  - `pgm-agent-system/output/weekly_draft_{YYYYMMDD}.json`
+  - Jira Initiative별 Weekly 코멘트 게시
+  - `pgm-agent-system/output/_artifacts.json` 갱신
+- **특징**: 체크포인트 기반 파이프라인 — 재실행 시 완료 단계 스킵
+- **실행**: `pgm-agent-system/CLAUDE.md` `full` 모드
 
-#### 회의록 → Jira Weekly 업데이트 (`/weekly`)
+#### Weekly Flash Report (`/pgm [JIRA_KEY]`)
+- **입력**: Jira 프로젝트 키 + 선택적 메모
+- **출력**: Flash Report 3종 (MD + Docs + Gmail)
+- **특징**: WoW 트렌드 포함 (이전 주 데이터 있을 때), 체크포인트 지원
+- **실행**: `pgm-agent-system/CLAUDE.md` `flash` 모드
+
+#### 회의록 → Jira 코멘트 (`/pgm --weekly [URL]` 또는 `/weekly`)
 - **입력**: Confluence 회의록 URL
-- **출력**: 각 Initiative 티켓(TM-XXXX)에 `N주차 Weekly 공유사항` 코멘트 게시
-- **특징**: 회의록에서 Initiative별 논의 내용 자동 추출 → 마크다운 미리보기 → 사용자 승인 → Jira 코멘트 게시
-- **섹션**: `지난주 진행상황` + `Action Item (이번주)` 구성
-- **스크립트**: `.claude/skills/weekly-updater/scripts/post_weekly_comment.py`
-- **주의**: 게시 전 반드시 사용자 승인
+- **출력**: TM-XXXX 티켓별 `N주차 Weekly 공유사항` 코멘트
+- **특징**: AI 파싱 → 마크다운 미리보기 → 사용자 승인 → 게시
+- **섹션**: `지난주 진행상황` + `Action Item (이번주)`
+- **주의**: 게시 전 반드시 사용자 승인 (되돌리기 어려움)
 
 #### C레벨 보고서 품질 검토 (`/report`)
-- **입력**: 보고서 파일 경로 (없으면 대화 내 최근 문서 자동 선택)
+- **입력**: 보고서 파일 경로 (없으면 `_artifacts.json`에서 이번 주 Flash 자동 선택)
 - **출력**: `report-agent-system/output/report_review_{YYYYMMDD}_{주제}.md`
 - **특징**: 즉시 결재 가능 / 질문 후 결재 / 반려 가능성 3단계 판정
 - **의존**: `report-agent-system/.claude/agents/red-team-validator` 내부 호출
 
 #### 과제 검토 (`/ticket-review`)
-- **입력**: Jira 내보내기 CSV (`pgm-agent-system/input/ticket-review/*.csv`)
+- **입력**: Jira 내보내기 CSV (`pgm-agent-system/input/ticket-review/*.csv`) 또는 JQL
 - **출력**: `pgm-agent-system/output/ticket_review_{YYYYMMDD}.md`
 - **특징**:
-  - CSV에서 MATCH 팀 처리 대상 과제를 자동 식별 (명시적 지표 + 도메인 키워드 분석)
-  - 유사 과제를 에픽·레이블·의미 기반으로 클러스터링
-  - 판단 경계선 과제는 `판단 필요` 별도 분류
-- **실행**: `pgm-agent-system/.claude/agents/ticket-reviewer/AGENT.md` 워크플로우 따름
+  - MATCH 팀 과제 자동 식별 (명시적 지표 + 도메인 키워드)
+  - 유사 과제 에픽·레이블·의미 기반 클러스터링
+  - 판단 경계 과제는 `판단 필요` 별도 분류
+- **실행**: `pgm-agent-system/.claude/agents/ticket-reviewer/AGENT.md`
 
 ### 팀 내 표준 파이프라인
-```
-/pgm → /report → (선택) 커뮤니케이션팀 /mail
 
-/ticket-review → (선택) /epic → Jira 등록
 ```
+# 주간 전체 실행 (권장)
+/pgm --full MATCH {CONFLUENCE_URL}
+
+# 단계별 실행
+/pgm MATCH              → Flash만
+/pgm --weekly {URL}     → 회의록 코멘트만
+
+# 성과 보고 전달
+/pgm → /report → /mail
+
+# 과제 분류 후 Jira 등록
+/ticket-review → /epic
+```
+
+### Artifact Bus 참조
+
+`pgm-agent-system/output/_artifacts.json`에서 이번 주 산출물 경로 확인:
+- `/report` 호출 시 → `flash_md` 필드에서 입력 파일 자동 선택
+- `/mail` 호출 시 → `flash_md` 또는 `meeting_minutes_md` 참조
 
 ---
 
@@ -255,9 +287,10 @@ confluence-reader → 분석 → confluence-writer
 | 문서 추출 전문가 | Agent: `doc-specialist` | claude-haiku-4-5 |
 | 이메일 HTML 변환·발송 | Agent: `mail-specialist` | claude-haiku-4-5 |
 | Jira 티켓 생성 | Agent: `jira-creator` | claude-sonnet-4-6 |
+| MEMB Task 티켓 생성 | Skill: `/task-ticket` + Agent: `task-ticket-creator` | claude-sonnet-4-6 |
 
 ### 트리거 키워드
-메일, 이메일, 발송, 보내줘, Gmail, 공유해줘, Jira, 티켓, 이슈, 등록, 만들어줘
+메일, 이메일, 발송, 보내줘, Gmail, 공유해줘, Jira, 티켓, 이슈, 등록, 만들어줘, MEMB, Task 티켓
 
 ### 세부 역량
 
@@ -274,8 +307,73 @@ confluence-reader → 분석 → confluence-writer
 - **출력**: `scripts/create_jira_{이니셔티브명}_{YYYYMMDD}.py` + Jira 티켓 URL 목록
 - **주의**: 티켓 생성은 되돌리기 어려우므로 반드시 사전 컨펌
 
+#### MEMB Task 티켓 생성 (`/task-ticket` 또는 `task-ticket-creator` agent)
+- **입력**: 대화 내용(슬랙/회의 내용 붙여넣기) 또는 작업 설명 텍스트
+- **처리**: 내용 분석 → 제목·본문·기한·우선순위 제안 → 사용자 컨펌 → 생성
+- **출력**: `scripts/create_memb_task_{YYYYMMDD}_{slug}.py` + MEMB 티켓 URL
+- **프로젝트**: MEMB 고정
+- **이슈 유형**: Task (단건 또는 복수 지원)
+- **특징**: 배경·작업내용·AC 구조화, 날짜 힌트 자동 변환, 컨펌 전 절대 생성하지 않음
+
 > **Epic 분해 + 일괄 Jira 등록**이 필요하면 기획팀 `/epic`을 사용할 것.
 > 이 팀의 Jira는 소규모 개별 티켓 생성에 특화.
+
+---
+
+## [미팅팀] 회의 관리
+
+### 역할
+회의 전·후 관리를 담당. 회의 맥락을 수집하고, Confluence 회의록을 작성·업로드하며, Google Calendar에 요약을 등록한다.
+
+### 팀원 구성
+| 역할 | 호출 방법 | 모델 |
+|------|----------|------|
+| 회의록 작성 + Confluence 업로드 | Skill: `/meeting` | claude-sonnet-4-6 |
+| 회의록 + 캘린더 등록 | Skill: `/meeting --calendar` | claude-sonnet-4-6 |
+| 회의록 AI 작성 | Agent: `minutes-writer` (meeting-agent-system 내) | claude-sonnet-4-6 |
+
+### 트리거 키워드
+회의록, 미팅, 미팅 정리, 회의 준비, 회의 기록, 회의 요약, 캘린더 등록, 일정 업데이트
+
+### 세부 역량
+
+#### 회의록 작성 (`/meeting`)
+- **입력**: 회의 노트 파일(`--input`) / Confluence URL(`--confluence`) / Initiative(`--initiative`)
+- **출력**: `meeting-agent-system/output/meeting_draft_{YYYYMMDD}_{slug}.md` + Confluence 페이지
+- **업로드 대상**: Core Customer Space / `[MATCH 미팅 회의록]` 하위
+- **페이지 제목 형식**: `{YYYY년 MM월 DD일} {회의 제목}`
+- **주의**: 업로드 전 반드시 미리보기 + 사용자 승인
+- **실행**: `meeting-agent-system/CLAUDE.md` `write` 모드
+
+#### Google Calendar 등록 (`/meeting --calendar`)
+- **조건**: 위 회의록 작성 후 자동 연계 또는 `--calendar-only`로 단독 실행
+- **이벤트 탐색**: 날짜 + 키워드 검색 → 복수 매칭 시 목록 선택
+- **삽입 포맷**:
+  ```
+  [회의 요약 — PM Studio]
+  📋 목적 / ✅ 결정 사항 / 📌 Action Item / 🔗 Confluence URL
+  ```
+- **환경변수**: `GOOGLE_CLIENT_SECRETS_PATH`, `GOOGLE_CALENDAR_ID`
+- **미설정 시**: STUB 모드 (요약 텍스트만 출력)
+
+### 팀 내 표준 파이프라인
+
+```
+# 회의록 작성 + Confluence 업로드
+/meeting --input notes.txt --initiative TM-2055
+
+# 회의록 + 캘린더 등록 한 번에
+/meeting --input notes.txt --title "Auxia 정기 미팅" --calendar
+
+# 회의록 업로드 후 Jira 코멘트 반영 (PGM 연동)
+/meeting → /pgm --weekly {Confluence URL}
+```
+
+### 설정 필요 항목
+
+`config/spaces.json`의 `core_customer` 섹션:
+- `space_key`: Core Customer Space의 실제 키
+- `meeting_parent_id`: `[MATCH 미팅 회의록]` 페이지 ID
 
 ---
 
