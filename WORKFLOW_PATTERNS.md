@@ -126,6 +126,70 @@ Discovery → PRD 작성 → GTM 브리프 → Confluence 저장
 
 ---
 
+---
+
+## Pattern H: 데이터 기반 기획 파이프라인
+
+```
+/databricks --analyze → /prd → /red → /epic
+```
+
+**트리거**: "데이터 보고 기획해줘", "지표 분석 후 PRD 써줘", "Databricks에서 {테이블} 분석해서 기획으로 연결해줘"
+
+**실행 순서**:
+1. `/databricks --analyze {table} "{분석 주제}" --initiative TM-XXXX` → 데이터 분석 리포트
+2. 분석 리포트를 Rough Note로 사용 → `/prd TM-XXXX`
+3. `/red {PRD 파일}` → 검증
+4. (선택) `/epic {PRD 파일}` → Jira 등록
+
+---
+
+## Pattern I: Slack → 회의록 파이프라인
+
+```
+/slack --today/#채널 → /meeting 또는 /pgm --weekly
+```
+
+**트리거**: "슬랙 대화 정리해줘", "오늘 논의된 거 회의록으로 만들어줘"
+
+**실행 순서**:
+1. `/slack --today #match-pm` → 오늘 대화 수집 + Action Item 추출
+2. 요약 결과 → `/meeting --input {slack_summary.md}` → Confluence 업로드
+3. (선택) `/pgm --weekly {Confluence URL}` → Jira Initiative 코멘트 게시
+
+**단독 활용**:
+```
+# 이번 주 주요 결정사항 파악
+/slack --week #match-pm
+
+# 특정 주제 관련 대화 찾기
+/slack --search "캠페인" #match-pm
+```
+
+---
+
+## Pattern J: Figma → 기획 파이프라인
+
+```
+/figma [URL] --prd → /red → /epic
+```
+
+**트리거**: "이 Figma 파일 기준으로 PRD 써줘", "디자인 보고 기획서 만들어줘"
+
+**실행 순서**:
+1. `/figma [URL]` → 화면 구조 파악 (필요 시)
+2. `/figma [URL] --prd` → 화면 분석 → PRD 초안 자동 생성
+3. `/red {PRD 파일}` → Red Team 검증
+4. (선택) `/figma [URL] --spec` → 개발팀 전달용 화면 설계서
+
+**화면 설계서 단독 생성**:
+```
+/figma [URL] --spec
+→ 완성 후 Confluence 저장 제안
+```
+
+---
+
 ## 병렬 실행 가능 조합
 
 | 병렬 가능 | 조건 |
@@ -133,6 +197,9 @@ Discovery → PRD 작성 → GTM 브리프 → Confluence 저장
 | `/pgm --full` 내 publisher + minutes-generator | analysed_report.json 생성 후 |
 | `/pgm --full` 내 jira-parser + confluence 페이지 로드 | 독립적, 동시 실행 가능 |
 | `confluence-reader` + 다른 검색 | 서로 독립 |
+| `/databricks --explore` + `confluence-reader` | 서로 독립 |
+| `/slack --today` + `/databricks --query` | 서로 독립 |
+| `figma-reader` + `schema-explorer` | 서로 독립 (figma --prd 시 병렬 가능) |
 
 ---
 

@@ -367,6 +367,9 @@
   .team-card.comms::after { background: linear-gradient(90deg, #7c3aed, #5b6af8); }
   .team-card.meeting::after { background: linear-gradient(90deg, #ef4444, #f59e0b); }
   .team-card.review::after { background: linear-gradient(90deg, #64748b, #94a3b8); }
+  .team-card.data::after { background: linear-gradient(90deg, #f97316, #ef4444); }
+  .team-card.collab::after { background: linear-gradient(90deg, #22d3ee, #10b981); }
+  .team-card.design::after { background: linear-gradient(90deg, #a78bfa, #ec4899); }
 
   .team-header {
     display: flex;
@@ -754,6 +757,9 @@
   .badge-comms { background: rgba(124,58,237,0.12); color: #a78bfa; }
   .badge-meeting { background: rgba(239,68,68,0.12); color: #f87171; }
   .badge-review { background: rgba(100,116,139,0.12); color: #94a3b8; }
+  .badge-data { background: rgba(249,115,22,0.12); color: #fb923c; }
+  .badge-collab { background: rgba(34,211,238,0.12); color: #22d3ee; }
+  .badge-design { background: rgba(167,139,250,0.12); color: #a78bfa; }
 
   .cmd-output-tag {
     display: inline-block;
@@ -889,26 +895,26 @@
   </h1>
   <p class="hero-sub">AI가 초안을 만들고, PM이 전략을 결정한다.</p>
   <div class="hero-tagline">
-    <strong>8개 에이전트 팀</strong>이 기획 · 검증 · GTM · 리포팅 · 회의 · 문서를<br>
+    <strong>11개 에이전트 팀</strong>이 기획 · 검증 · QA · GTM · 리포팅 · 회의 · 문서 · 데이터 · 디자인을<br>
     하나의 명령으로 자동화하는 Musinsa PM 운영 시스템
   </div>
 
   <div class="hero-stats">
     <div class="stat">
-      <div class="stat-num">13</div>
+      <div class="stat-num">24</div>
       <div class="stat-label">Slash Commands</div>
     </div>
     <div class="stat">
-      <div class="stat-num">7</div>
+      <div class="stat-num">11</div>
       <div class="stat-label">AI Agent Teams</div>
     </div>
     <div class="stat">
-      <div class="stat-num">6</div>
+      <div class="stat-num">9</div>
       <div class="stat-label">External APIs</div>
     </div>
     <div class="stat">
-      <div class="stat-num">5</div>
-      <div class="stat-label">Workflow Patterns</div>
+      <div class="stat-num">7</div>
+      <div class="stat-label">2026 Q2 과제</div>
     </div>
   </div>
 
@@ -928,18 +934,18 @@
   <p class="section-desc">비서실장이 모든 요청을 받아 8개 전문팀에 위임하고 결과를 통합합니다.</p>
 
   <div class="arch-container">
-    <div class="arch-title">PM Studio — 8-Team Cooperative Agent System</div>
+    <div class="arch-title">PM Studio — 11-Team Cooperative Agent System</div>
     <div class="arch-layer">
       <div class="arch-chief">
         <div>비서실장 (Chief of Staff)</div>
         <div class="arch-chief-sub">요청 분해 · 팀 라우팅 · 결과 통합</div>
       </div>
       <div class="arch-connector"></div>
-      <div class="arch-teams">
+      <div class="arch-teams" style="grid-template-columns: repeat(5, 1fr);">
         <div class="arch-team">
           <div class="arch-team-icon">📐</div>
           <div class="arch-team-name">기획팀</div>
-          <div class="arch-team-role">PRD · Red Team · Epic</div>
+          <div class="arch-team-role">PRD · Red Team · QA · Epic</div>
         </div>
         <div class="arch-team">
           <div class="arch-team-icon">📣</div>
@@ -976,6 +982,26 @@
           <div class="arch-team-name">회고팀</div>
           <div class="arch-team-role">주간 작업 로그</div>
         </div>
+        <div class="arch-team">
+          <div class="arch-team-icon">🧪</div>
+          <div class="arch-team-name">QA팀</div>
+          <div class="arch-team-role">테스트케이스 · PM 브리핑</div>
+        </div>
+        <div class="arch-team">
+          <div class="arch-team-icon">🗄️</div>
+          <div class="arch-team-name">데이터팀</div>
+          <div class="arch-team-role">Databricks · SQL · 분석</div>
+        </div>
+        <div class="arch-team">
+          <div class="arch-team-icon">💬</div>
+          <div class="arch-team-name">협업팀</div>
+          <div class="arch-team-role">Slack 조회 · 요약 · 챗봇</div>
+        </div>
+        <div class="arch-team">
+          <div class="arch-team-icon">🎨</div>
+          <div class="arch-team-name">디자인팀</div>
+          <div class="arch-team-role">Figma 분석 · 설계서</div>
+        </div>
       </div>
     </div>
   </div>
@@ -999,16 +1025,18 @@
           <div class="team-name-en">Planning Team</div>
         </div>
       </div>
-      <div class="team-desc">아이디어를 실행 가능한 스펙으로 변환. 경쟁사 분석, 페르소나, 기능 정의부터 Jira 등록까지 자동화.</div>
+      <div class="team-desc">아이디어를 실행 가능한 스펙으로 변환. 경쟁사 분석, 페르소나, 기능 정의부터 QA 문서 · Jira 등록까지 자동화.</div>
       <div class="skills-list">
         <span class="skill-tag featured">/prd</span>
         <span class="skill-tag featured">/red</span>
+        <span class="skill-tag featured">qa-agent</span>
         <span class="skill-tag featured">/epic</span>
       </div>
       <div class="outputs">
         <div class="outputs-label">산출물</div>
         <div class="output-item">PRD 문서 (9섹션 구조)</div>
         <div class="output-item">Red Team 검증 리포트</div>
+        <div class="output-item">QA 테스트케이스 + PM 브리핑</div>
         <div class="output-item">Jira Epic 티켓 자동 생성</div>
       </div>
     </div>
@@ -1159,6 +1187,75 @@
         <div class="outputs-label">산출물</div>
         <div class="output-item">주간 작업 로그 MD</div>
         <div class="output-item">C레벨 보고서 품질 검토</div>
+      </div>
+    </div>
+
+    <div class="team-card data">
+      <div class="team-header">
+        <div class="team-emoji">🗄️</div>
+        <div>
+          <div class="team-name">데이터팀</div>
+          <div class="team-name-en">Data Team · Databricks</div>
+        </div>
+      </div>
+      <div class="team-desc">Databricks Unity Catalog 탐색, 자연어 → SQL 변환 실행, PM 관점 인사이트 분석 리포트 생성.</div>
+      <div class="skills-list">
+        <span class="skill-tag featured">/databricks</span>
+        <span class="skill-tag">--explore</span>
+        <span class="skill-tag">--query</span>
+        <span class="skill-tag">--analyze</span>
+      </div>
+      <div class="outputs">
+        <div class="outputs-label">산출물</div>
+        <div class="output-item">Unity Catalog 구조 리포트</div>
+        <div class="output-item">쿼리 결과 + SQL 미리보기</div>
+        <div class="output-item">데이터 분석 인사이트 리포트</div>
+      </div>
+    </div>
+
+    <div class="team-card collab">
+      <div class="team-header">
+        <div class="team-emoji">💬</div>
+        <div>
+          <div class="team-name">협업팀</div>
+          <div class="team-name-en">Collaboration Team · Slack</div>
+        </div>
+      </div>
+      <div class="team-desc">Slack 채널 대화를 수집·요약하고 결정사항·Action Item을 자동 추출. 오늘/이번 주 단위 조회.</div>
+      <div class="skills-list">
+        <span class="skill-tag featured">/slack</span>
+        <span class="skill-tag">--today</span>
+        <span class="skill-tag">--week</span>
+        <span class="skill-tag">--search</span>
+      </div>
+      <div class="outputs">
+        <div class="outputs-label">산출물</div>
+        <div class="output-item">대화 요약 (결정사항 + Action Item)</div>
+        <div class="output-item">키워드 검색 결과</div>
+      </div>
+    </div>
+
+    <div class="team-card design">
+      <div class="team-header">
+        <div class="team-emoji">🎨</div>
+        <div>
+          <div class="team-name">디자인팀</div>
+          <div class="team-name-en">Design Team · Figma</div>
+        </div>
+      </div>
+      <div class="team-desc">Figma 파일 분석으로 화면 설계서·PRD 초안 자동 생성. Before/After 비교, UX 카피 추출까지.</div>
+      <div class="skills-list">
+        <span class="skill-tag featured">/figma</span>
+        <span class="skill-tag">--spec</span>
+        <span class="skill-tag">--prd</span>
+        <span class="skill-tag">--compare</span>
+        <span class="skill-tag">--copy</span>
+      </div>
+      <div class="outputs">
+        <div class="outputs-label">산출물</div>
+        <div class="output-item">화면 구조 분석 리포트</div>
+        <div class="output-item">화면 설계서 (개발팀 전달용)</div>
+        <div class="output-item">PRD 초안 (기획팀 연계)</div>
       </div>
     </div>
 
@@ -1378,6 +1475,78 @@
       </div>
     </div>
 
+    <div class="workflow-card pattern-a fade-in">
+      <div>
+        <div class="workflow-label">Pattern H · New</div>
+        <div class="workflow-title">데이터 → 기획</div>
+        <div class="workflow-desc">Databricks 분석 결과 → PRD 자동 연결</div>
+      </div>
+      <div class="workflow-steps">
+        <div class="wf-step">
+          <span class="wf-cmd">/databricks --analyze {table}</span>
+          <span class="wf-desc">KPI 데이터 분석 + 인사이트</span>
+        </div>
+        <div class="wf-arrow">↓</div>
+        <div class="wf-step">
+          <span class="wf-cmd">/prd TM-XXXX</span>
+          <span class="wf-desc">분석 결과 → PRD Rough Note로 활용</span>
+        </div>
+        <div class="wf-arrow">↓</div>
+        <div class="wf-step">
+          <span class="wf-cmd">/red {PRD}</span>
+          <span class="wf-desc">가정 검증</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="workflow-card pattern-b fade-in">
+      <div>
+        <div class="workflow-label">Pattern I · New</div>
+        <div class="workflow-title">Slack → 회의록</div>
+        <div class="workflow-desc">채널 대화 수집 → 회의록 자동 생성</div>
+      </div>
+      <div class="workflow-steps">
+        <div class="wf-step">
+          <span class="wf-cmd">/slack --today #match-pm</span>
+          <span class="wf-desc">오늘 대화 수집 + Action Item 추출</span>
+        </div>
+        <div class="wf-arrow">↓</div>
+        <div class="wf-step">
+          <span class="wf-cmd">/meeting --input {slack.md}</span>
+          <span class="wf-desc">회의록 작성 + Confluence 업로드</span>
+        </div>
+        <div class="wf-arrow">↓</div>
+        <div class="wf-step">
+          <span class="wf-cmd">/pgm --weekly {Confluence URL}</span>
+          <span class="wf-desc">Jira Initiative 코멘트 자동 게시</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="workflow-card pattern-c fade-in">
+      <div>
+        <div class="workflow-label">Pattern J · New</div>
+        <div class="workflow-title">Figma → 기획</div>
+        <div class="workflow-desc">화면 분석 → 설계서 + PRD 자동 생성</div>
+      </div>
+      <div class="workflow-steps">
+        <div class="wf-step">
+          <span class="wf-cmd">/figma [URL]</span>
+          <span class="wf-desc">화면 구조 파악</span>
+        </div>
+        <div class="wf-arrow">↓</div>
+        <div class="wf-step">
+          <span class="wf-cmd">/figma [URL] --spec</span>
+          <span class="wf-desc">개발팀 전달용 설계서 → Confluence</span>
+        </div>
+        <div class="wf-arrow">↓</div>
+        <div class="wf-step">
+          <span class="wf-cmd">/figma [URL] --prd</span>
+          <span class="wf-desc">PRD 초안 자동 생성 → /red → /epic</span>
+        </div>
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -1387,12 +1556,12 @@
 <section class="fade-in">
   <div class="section-label">Command Reference</div>
   <h2>전체 명령어</h2>
-  <p class="section-desc">13개 Slash Command로 PM 업무 전 사이클을 커버합니다.</p>
+  <p class="section-desc">23개 명령으로 PM 업무 전 사이클을 커버합니다.</p>
 
   <div class="commands-section">
     <div class="commands-header">
-      <h3>Slash Commands</h3>
-      <span class="cmd-count">13개</span>
+      <h3>Commands & Agents</h3>
+      <span class="cmd-count">23개</span>
     </div>
     <table class="commands-table">
       <thead>
@@ -1415,6 +1584,12 @@
           <td>PRD 가정 검증 및 Red Team 질문 생성</td>
           <td><span class="cmd-team-badge badge-planning">📐 기획</span></td>
           <td><span class="cmd-output-tag">redteam_{date}.md</span></td>
+        </tr>
+        <tr>
+          <td><span class="cmd-name">qa-agent</span></td>
+          <td>PRD → QA 테스트케이스 + PM 킥오프 브리핑 자동 생성</td>
+          <td><span class="cmd-team-badge badge-planning">📐 기획</span></td>
+          <td><span class="cmd-output-tag">qa_testcase / qa_briefing.md</span></td>
         </tr>
         <tr>
           <td><span class="cmd-name">/epic</span></td>
@@ -1482,6 +1657,60 @@
           <td><span class="cmd-team-badge badge-review">📊 회고</span></td>
           <td><span class="cmd-output-tag">work_log_{date}.md</span></td>
         </tr>
+        <tr>
+          <td><span class="cmd-name">/databricks</span></td>
+          <td>Unity Catalog 탐색 (args 없음)</td>
+          <td><span class="cmd-team-badge badge-data">🗄️ 데이터</span></td>
+          <td><span class="cmd-output-tag">explore_{date}.md</span></td>
+        </tr>
+        <tr>
+          <td><span class="cmd-name">/databricks --query</span></td>
+          <td>자연어 또는 SQL → 쿼리 실행 + 결과 요약</td>
+          <td><span class="cmd-team-badge badge-data">🗄️ 데이터</span></td>
+          <td><span class="cmd-output-tag">query_{date}.md</span></td>
+        </tr>
+        <tr>
+          <td><span class="cmd-name">/databricks --analyze</span></td>
+          <td>테이블 분석 + PM 관점 인사이트 리포트</td>
+          <td><span class="cmd-team-badge badge-data">🗄️ 데이터</span></td>
+          <td><span class="cmd-output-tag">analyze_{date}.md</span></td>
+        </tr>
+        <tr>
+          <td><span class="cmd-name">/slack --today</span></td>
+          <td>오늘 채널 대화 수집 + 결정사항·Action Item 요약</td>
+          <td><span class="cmd-team-badge badge-collab">💬 협업</span></td>
+          <td><span class="cmd-output-tag">slack_{date}_today.md</span></td>
+        </tr>
+        <tr>
+          <td><span class="cmd-name">/slack --week</span></td>
+          <td>이번 주 채널 대화 전체 요약</td>
+          <td><span class="cmd-team-badge badge-collab">💬 협업</span></td>
+          <td><span class="cmd-output-tag">slack_{date}_week.md</span></td>
+        </tr>
+        <tr>
+          <td><span class="cmd-name">/figma [URL]</span></td>
+          <td>Figma 파일/프레임 화면 구조 분석</td>
+          <td><span class="cmd-team-badge badge-design">🎨 디자인</span></td>
+          <td><span class="cmd-output-tag">figma_analyze_{date}.md</span></td>
+        </tr>
+        <tr>
+          <td><span class="cmd-name">/figma --spec</span></td>
+          <td>화면 설계서 (개발팀 전달용 스펙 문서)</td>
+          <td><span class="cmd-team-badge badge-design">🎨 디자인</span></td>
+          <td><span class="cmd-output-tag">figma_spec_{date}.md</span></td>
+        </tr>
+        <tr>
+          <td><span class="cmd-name">/figma --prd</span></td>
+          <td>Figma 화면 → PRD 초안 자동 생성 (기획팀 연계)</td>
+          <td><span class="cmd-team-badge badge-design">🎨 디자인</span></td>
+          <td><span class="cmd-output-tag">prd_{date}.md</span></td>
+        </tr>
+        <tr>
+          <td><span class="cmd-name">/archive</span></td>
+          <td>30일 이상 오래된 결과물을 output/_archive/ 로 자동 정리</td>
+          <td><span class="cmd-team-badge" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid rgba(16,185,129,0.25);">🗂 관리</span></td>
+          <td><span class="cmd-output-tag">output/_archive/{YYYY-MM}/</span></td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -1526,7 +1755,7 @@
 
 <footer>
   <strong>PM Studio</strong> — AI-Native PM Operating System for Musinsa<br>
-  <span style="margin-top: 6px; display: block;">Built with Claude Sonnet 4.6 · 2026 Q1</span>
+  <span style="margin-top: 6px; display: block;">Built with Claude Sonnet 4.6 · 2026 Q2 · 11 Teams · 7 Initiatives · Databricks · Slack · Figma</span>
 </footer>
 
 <script>

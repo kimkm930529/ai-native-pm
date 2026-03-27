@@ -51,6 +51,14 @@ args가 없으면 "무엇을 도와드릴까요?" 라고 묻는다.
 
 ## 실행 규칙
 
+0. **[필수] 세션 로그 시작 기록** — /staff 호출 즉시 아래 명령 실행 후 SESSION_ID를 캡처한다.
+   ```bash
+   python3 /Users/musinsa/Documents/agent_project/pm-studio/scripts/log_staff_session.py \
+     --start "[사용자 요청 내용 전체 (최대 200자)]"
+   # 출력 예: SESSION_ID=20260324_103045
+   ```
+   SESSION_ID는 이 세션 내내 보관한다.
+
 1. **CLAUDE.md를 읽어** 비서실장 역할과 전체 판단 흐름(요청 분해 → 역량 점검 → 실행)을 파악한다.
 
 2. **CAPABILITY_MAP.md를 읽어** 현재 팀 역량을 확인한다.
@@ -80,6 +88,19 @@ args가 없으면 "무엇을 도와드릴까요?" 라고 묻는다.
 4. **이니셔티브 ID(TM-XXXX)가 포함된 경우:**
    - `input/initiatives/index.md`에서 매칭 이니셔티브를 찾는다.
    - `context.md`, `meta.json`을 읽어 배경을 파악한 뒤 진행한다.
+
+5. **[필수] 세션 로그 완료 기록** — 모든 작업이 끝난 뒤 아래 명령으로 세션을 마감한다.
+   ```bash
+   python3 /Users/musinsa/Documents/agent_project/pm-studio/scripts/log_staff_session.py \
+     --end {SESSION_ID} \
+     --summary "한 줄 요약 (예: Campaign Meta Engine PRD 작성 + Red Team 검증)" \
+     --skills "/prd,/red" \
+     --outputs "prd_20260324_xxx.md,redteam_20260324_xxx.md" \
+     --status completed
+   ```
+   - `--skills`: 실제 호출한 스킬 목록 (쉼표 구분)
+   - `--outputs`: 생성된 산출물 파일명 (쉼표 구분, 없으면 생략)
+   - `--status`: completed / failed / interrupted 중 하나
 
 ---
 

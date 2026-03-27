@@ -1,21 +1,22 @@
 """
-Diagram Generator — Mermaid.js HTML 렌더러
+Diagram Generator — SVG/HTML 렌더러
 
-입력: .mmd 파일 경로 또는 --all 플래그 (output/diagrams/*.mmd 전체)
-출력: output/diagrams/{name}.html (브라우저에서 바로 열 수 있는 단독 HTML)
+SVG 파일 또는 인라인 SVG 코드를 표준 다이어그램 HTML 템플릿으로 감싸 .html 파일 생성.
+Mermaid 없이 순수 SVG 다이어그램 (아키텍처, 매트릭스, 타임라인, IA 등) 에 사용.
 
 사용법:
-  python3 render.py output/diagrams/campaign_flow.mmd
-  python3 render.py --all                   # output/diagrams/ 내 모든 .mmd 처리
+  python3 render_html.py --svg output/diagrams/system_arch.svg --name system_arch
+  python3 render_html.py --inline-svg "<svg...>" --name system_arch
+  python3 render_html.py --svg output/diagrams/system_arch.svg --name system_arch --title "시스템 아키텍처"
 """
 
 import sys
 import argparse
 from pathlib import Path
+from datetime import datetime
 
 # ─── 경로 설정 ─────────────────────────────────────────────────────────────
-SKILL_DIR = Path(__file__).parents[1]
-PROJECT_ROOT = Path(__file__).parents[4]
+PROJECT_ROOT    = Path(__file__).parents[4]
 OUTPUT_DIAGRAMS = PROJECT_ROOT / "output" / "diagrams"
 
 # ─── HTML 템플릿 ───────────────────────────────────────────────────────────
@@ -26,16 +27,15 @@ HTML_TEMPLATE = """\
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{title}</title>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <style>
     :root {{
-      --bg:          #0f172a;
-      --surface:     #1e293b;
-      --surface-2:   #334155;
-      --border:      #2d3f55;
-      --text-1:      #f1f5f9;
-      --text-2:      #94a3b8;
-      --accent:      #6366f1;
+      --bg:        #0f172a;
+      --surface:   #1e293b;
+      --surface-2: #334155;
+      --border:    #2d3f55;
+      --text-1:    #f1f5f9;
+      --text-2:    #94a3b8;
+      --accent:    #6366f1;
     }}
 
     * {{ box-sizing: border-box; margin: 0; padding: 0; }}
@@ -79,7 +79,7 @@ HTML_TEMPLATE = """\
     }}
     .sep {{ color: var(--border); }}
 
-    /* ── 다이어그램 카드 (16:9 + 줌/팬) ── */
+    /* ── 다이어그램 래퍼 ── */
     .diagram-wrapper {{
       max-width: 1200px;
       margin: 0 auto;
@@ -104,10 +104,7 @@ HTML_TEMPLATE = """\
       transition: color .15s, background .15s;
       user-select: none;
     }}
-    .toolbar-btn:hover {{
-      background: var(--border);
-      color: var(--text-1);
-    }}
+    .toolbar-btn:hover {{ background: var(--border); color: var(--text-1); }}
     .zoom-label {{
       font-size: 0.72rem;
       color: var(--text-2);
@@ -115,7 +112,7 @@ HTML_TEMPLATE = """\
       text-align: center;
     }}
 
-    /* 카드 — 16:9 고정 프레임 */
+    /* 카드 */
     .diagram-box {{
       background: var(--surface);
       border: 1px solid var(--border);
@@ -124,18 +121,20 @@ HTML_TEMPLATE = """\
         0 0 0 1px rgba(255,255,255,.03),
         0 8px 32px rgba(0,0,0,.5),
         0 2px 8px rgba(0,0,0,.3);
-      aspect-ratio: 16 / 9;
-      overflow: hidden;         /* 줌/팬은 내부 canvas가 담당 */
+      overflow: hidden;
       position: relative;
       cursor: grab;
+      min-height: 360px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }}
     .diagram-box.grabbing {{ cursor: grabbing; }}
 
-    /* 줌/팬 가능한 내부 캔버스 */
+    /* 줌/팬 내부 캔버스 */
     .diagram-canvas {{
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      width: 100%;
+      height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -143,15 +142,10 @@ HTML_TEMPLATE = """\
       transition: transform .05s linear;
       padding: 36px 44px;
     }}
-    .diagram-canvas .mermaid {{
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }}
-    .diagram-canvas .mermaid svg {{
+    .diagram-canvas svg {{
       max-width: 100%;
-      max-height: 100%;
       height: auto;
+      display: block;
     }}
 
     /* ── 소스 코드 토글 ── */
@@ -176,9 +170,7 @@ HTML_TEMPLATE = """\
       transition: transform .15s;
       display: inline-block;
     }}
-    details[open] > summary::before {{
-      transform: rotate(90deg);
-    }}
+    details[open] > summary::before {{ transform: rotate(90deg); }}
     details > summary:hover {{ color: var(--text-1); }}
     .source-block {{
       margin-top: 6px;
@@ -199,7 +191,7 @@ HTML_TEMPLATE = """\
   <div class="header">
     <h1>{title}</h1>
     <div class="meta">
-      <span class="badge">diagram-generator</span>
+      <span class="badge">diagram-generator · svg</span>
       <span class="sep">·</span>
       <span>{generated_at}</span>
     </div>
@@ -214,50 +206,17 @@ HTML_TEMPLATE = """\
     </div>
     <div class="diagram-box" id="diagram-box">
       <div class="diagram-canvas" id="diagram-canvas">
-        <div class="mermaid">
-{mermaid_code}
-        </div>
+{svg_content}
       </div>
     </div>
   </div>
 
   <details>
-    <summary>Mermaid 소스 보기</summary>
-    <div class="source-block">{mermaid_code_escaped}</div>
+    <summary>SVG 소스 보기</summary>
+    <div class="source-block">{svg_escaped}</div>
   </details>
 
   <script>
-    mermaid.initialize({{
-      startOnLoad: true,
-      theme: 'dark',
-      themeVariables: {{
-        darkMode: true,
-        background:           '#1e293b',
-        mainBkg:              '#253349',
-        nodeBorder:           '#3b5068',
-        clusterBkg:           '#1a2840',
-        titleColor:           '#f1f5f9',
-        edgeLabelBackground:  '#1e293b',
-        lineColor:            '#4a6280',
-        primaryColor:         '#6366f1',
-        primaryTextColor:     '#f1f5f9',
-        primaryBorderColor:   '#818cf8',
-        secondaryColor:       '#0f172a',
-        tertiaryColor:        '#1e293b',
-        nodeTextColor:        '#f1f5f9',
-        fontSize:             '14px',
-        fontFamily:           '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-      }},
-      flowchart: {{
-        diagramPadding: 28,
-        htmlLabels:     true,
-        curve:          'basis',
-        nodeSpacing:    52,
-        rankSpacing:    64,
-      }},
-    }});
-
-    /* ── 줌/팬 컨트롤러 ── */
     (function () {{
       const box    = document.getElementById('diagram-box');
       const canvas = document.getElementById('diagram-canvas');
@@ -265,22 +224,19 @@ HTML_TEMPLATE = """\
 
       let scale = 1, tx = 0, ty = 0;
       let isDragging = false, startX = 0, startY = 0, baseX = 0, baseY = 0;
-
-      const MIN_SCALE = 0.3, MAX_SCALE = 4, STEP = 0.2;
+      const MIN_SCALE = 0.2, MAX_SCALE = 5, STEP = 0.2;
 
       function applyTransform() {{
         canvas.style.transform = `translate(${{tx}}px, ${{ty}}px) scale(${{scale}})`;
         label.textContent = Math.round(scale * 100) + '%';
       }}
 
-      function clampTranslate(x, y) {{
-        // 너무 멀리 나가지 않도록 박스 크기 기준 느슨하게 제한
-        const limit = 1000 * scale;
+      function clamp(x, y) {{
+        const limit = 1200 * scale;
         return [Math.max(-limit, Math.min(limit, x)),
                 Math.max(-limit, Math.min(limit, y))];
       }}
 
-      // 버튼 줌
       document.getElementById('btn-zoom-in').addEventListener('click', () => {{
         scale = Math.min(MAX_SCALE, Math.round((scale + STEP) * 10) / 10);
         applyTransform();
@@ -293,7 +249,6 @@ HTML_TEMPLATE = """\
         scale = 1; tx = 0; ty = 0; applyTransform();
       }});
 
-      // 마우스 휠 줌 (박스 위에서)
       box.addEventListener('wheel', (e) => {{
         e.preventDefault();
         const delta = e.deltaY > 0 ? -STEP : STEP;
@@ -302,7 +257,6 @@ HTML_TEMPLATE = """\
         applyTransform();
       }}, {{ passive: false }});
 
-      // 드래그 팬
       box.addEventListener('mousedown', (e) => {{
         if (e.button !== 0) return;
         isDragging = true;
@@ -312,10 +266,7 @@ HTML_TEMPLATE = """\
       }});
       window.addEventListener('mousemove', (e) => {{
         if (!isDragging) return;
-        const [cx, cy] = clampTranslate(
-          baseX + (e.clientX - startX),
-          baseY + (e.clientY - startY)
-        );
+        const [cx, cy] = clamp(baseX + (e.clientX - startX), baseY + (e.clientY - startY));
         tx = cx; ty = cy;
         applyTransform();
       }});
@@ -324,20 +275,18 @@ HTML_TEMPLATE = """\
         box.classList.remove('grabbing');
       }});
 
-      // 터치 팬 (한 손가락)
-      let touchStartX = 0, touchStartY = 0, touchBaseX = 0, touchBaseY = 0;
+      // 터치 팬
+      let tStartX = 0, tStartY = 0, tBaseX = 0, tBaseY = 0;
       box.addEventListener('touchstart', (e) => {{
         if (e.touches.length !== 1) return;
-        touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY;
-        touchBaseX = tx; touchBaseY = ty;
+        tStartX = e.touches[0].clientX; tStartY = e.touches[0].clientY;
+        tBaseX = tx; tBaseY = ty;
       }}, {{ passive: true }});
       box.addEventListener('touchmove', (e) => {{
         if (e.touches.length !== 1) return;
         e.preventDefault();
-        const [cx, cy] = clampTranslate(
-          touchBaseX + (e.touches[0].clientX - touchStartX),
-          touchBaseY + (e.touches[0].clientY - touchStartY)
-        );
+        const [cx, cy] = clamp(tBaseX + (e.touches[0].clientX - tStartX),
+                                tBaseY + (e.touches[0].clientY - tStartY));
         tx = cx; ty = cy;
         applyTransform();
       }}, {{ passive: false }});
@@ -348,113 +297,67 @@ HTML_TEMPLATE = """\
 """
 
 
-def render_mmd(mmd_path: Path) -> Path:
-    """단일 .mmd 파일을 HTML로 변환 후 저장. 생성된 html 경로 반환."""
-    mmd_path = mmd_path.resolve()
-    if not mmd_path.exists():
-        raise FileNotFoundError(f"파일 없음: {mmd_path}")
+def render_svg(svg_content: str, name: str, title: str | None = None) -> Path:
+    """SVG 문자열을 받아 output/diagrams/{name}.html로 저장."""
+    OUTPUT_DIAGRAMS.mkdir(parents=True, exist_ok=True)
 
-    raw = mmd_path.read_text(encoding="utf-8").strip()
-    title = mmd_path.stem.replace("_", " ").replace("-", " ").title()
+    if title is None:
+        title = name.replace("_", " ").replace("-", " ").title()
 
-    from datetime import datetime
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    # SVG 들여쓰기 정렬
+    indented_svg = "\n".join("        " + line for line in svg_content.strip().splitlines())
+    escaped_svg  = svg_content.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
     html_content = HTML_TEMPLATE.format(
         title=title,
-        mermaid_code=raw,
-        mermaid_code_escaped=raw.replace("<", "&lt;").replace(">", "&gt;"),
         generated_at=generated_at,
+        svg_content=indented_svg,
+        svg_escaped=escaped_svg,
     )
 
-    out_path = mmd_path.with_suffix(".html")
+    out_path = OUTPUT_DIAGRAMS / f"{name}.html"
     out_path.write_text(html_content, encoding="utf-8")
     print(f"✅ 렌더링 완료: {out_path}")
     return out_path
 
 
-def render_inline(mermaid_code: str, name: str) -> Path:
-    """인라인 Mermaid 코드를 받아 output/diagrams/{name}.html로 저장."""
-    OUTPUT_DIAGRAMS.mkdir(parents=True, exist_ok=True)
-    mmd_path = OUTPUT_DIAGRAMS / f"{name}.mmd"
-    mmd_path.write_text(mermaid_code.strip(), encoding="utf-8")
-    print(f"  .mmd 저장: {mmd_path}")
-    return render_mmd(mmd_path)
+def render_svg_file(svg_path: Path, name: str | None = None, title: str | None = None) -> Path:
+    """SVG 파일을 읽어 HTML로 변환."""
+    svg_path = svg_path.resolve()
+    if not svg_path.exists():
+        raise FileNotFoundError(f"SVG 파일 없음: {svg_path}")
 
-
-def render_all() -> list[Path]:
-    """output/diagrams/ 내 모든 .mmd 파일을 렌더링."""
-    mmd_files = list(OUTPUT_DIAGRAMS.glob("*.mmd"))
-    if not mmd_files:
-        print("렌더링할 .mmd 파일이 없습니다.")
-        return []
-    results = []
-    for f in sorted(mmd_files):
-        try:
-            results.append(render_mmd(f))
-        except Exception as e:
-            print(f"⚠️  {f.name} 렌더링 실패: {e}")
-    return results
+    svg_content = svg_path.read_text(encoding="utf-8")
+    if name is None:
+        name = svg_path.stem
+    return render_svg(svg_content, name, title)
 
 
 # ─── CLI ──────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Mermaid .mmd → HTML 렌더러")
-    parser.add_argument("files", nargs="*", help=".mmd 파일 경로 (없으면 --all 필요)")
-    parser.add_argument("--all", action="store_true", dest="all_files",
-                        help="output/diagrams/ 내 모든 .mmd 처리")
-    parser.add_argument("--inline", metavar="CODE",
-                        help="인라인 Mermaid 코드 문자열 (--name과 함께)")
-    parser.add_argument("--name", metavar="NAME",
-                        help="인라인 모드 출력 파일명 (확장자 제외)")
-    parser.add_argument("--png", action="store_true",
-                        help="HTML 렌더링 후 PNG도 함께 내보내기")
+    parser = argparse.ArgumentParser(description="SVG → HTML 다이어그램 렌더러")
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--svg", metavar="FILE",
+                       help=".svg 파일 경로")
+    group.add_argument("--inline-svg", metavar="CODE",
+                       help="인라인 SVG 코드 문자열")
+
+    parser.add_argument("--name", metavar="NAME", required=True,
+                        help="출력 파일명 (확장자 제외, 예: system_arch)")
+    parser.add_argument("--title", metavar="TITLE",
+                        help="다이어그램 제목 (기본값: name을 Title Case로 변환)")
     args = parser.parse_args()
 
-    # PNG 후처리 헬퍼 (--png 플래그 사용 시)
-    def maybe_export_png(html_path: Path):
-        if not args.png:
-            return
-        try:
-            export_script = Path(__file__).parent / "export_png.py"
-            import subprocess
-            result = subprocess.run(
-                [sys.executable, str(export_script), str(html_path)],
-                capture_output=True, text=True
-            )
-            if result.returncode == 0:
-                png_path = html_path.with_suffix(".png")
-                print(f"🖼️  PNG: file://{png_path}")
-            else:
-                print(f"⚠️  PNG 변환 실패: {result.stderr.strip()}")
-        except Exception as e:
-            print(f"⚠️  PNG 변환 오류: {e}")
+    try:
+        if args.svg:
+            out = render_svg_file(Path(args.svg), args.name, args.title)
+        else:
+            out = render_svg(args.inline_svg, args.name, args.title)
 
-    if args.inline:
-        if not args.name:
-            print("오류: --inline 사용 시 --name 옵션이 필요합니다.")
-            sys.exit(1)
-        out = render_inline(args.inline, args.name)
         print(f"📊 HTML: file://{out}")
-        maybe_export_png(out)
 
-    elif args.all_files:
-        results = render_all()
-        if results:
-            print(f"\n📊 총 {len(results)}개 다이어그램 렌더링 완료:")
-            for r in results:
-                print(f"  file://{r}")
-                maybe_export_png(r)
-
-    elif args.files:
-        for fp in args.files:
-            try:
-                out = render_mmd(Path(fp))
-                print(f"📊 HTML: file://{out}")
-                maybe_export_png(out)
-            except Exception as e:
-                print(f"⚠️  오류: {e}")
-
-    else:
-        parser.print_help()
+    except Exception as e:
+        print(f"⚠️  오류: {e}")
         sys.exit(1)

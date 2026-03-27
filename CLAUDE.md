@@ -22,8 +22,11 @@
 
 | 요청 유형 | 호출 |
 |---------|------|
-| PRD 작성 | Skill: `/prd` |
+| 2-Pager 작성 + 검토 (경영진용 의사결정 문서) | Skill: `/two-pager` |
+| 기능 PRD 작성 | Skill: `/prd` |
+| 데이터 파이프라인 PRD 작성 | Skill: `/prd` (자동 분기 → `data-prd-writer`) |
 | PRD 검증 / Red Team | Skill: `/red` |
+| QA 테스트케이스 + PM 킥오프 브리핑 문서 생성 | Agent: `qa-agent` |
 | Epic 분해 + Jira 등록 | Skill: `/epic` |
 | GTM 브리프 작성 | Skill: `/gtm` |
 | Weekly Flash 보고서 | Skill: `/pgm [JIRA_KEY]` |
@@ -41,8 +44,38 @@
 | 회의록 작성 + Confluence 업로드 | Skill: `/meeting` |
 | 회의록 + Google Calendar 등록 | Skill: `/meeting --calendar` |
 | 주간 작업 로그 정리 | Skill: `/work-log` |
+| **오늘/어제/특정 날짜 업무 정리** (타임블럭 CSV+ICS) | Agent: `calendar-agent-system/CLAUDE.md` → **haiku 모델** |
+| **주간 업무 정리** (타임블럭 CSV+ICS) | Agent: `calendar-agent-system/CLAUDE.md` → **haiku 모델** |
+| Databricks 데이터 탐색 · 쿼리 실행 · 분석 | Skill: `/databricks` |
+| Slack 대화 조회 (오늘/이번 주) | Skill: `/slack --today` 또는 `/slack --week` |
+| Slack 채널 내 키워드 검색 | Skill: `/slack --search "[키워드]"` |
+| Slack 메시지 발송 | Skill: `/slack --send` (컨펌 필수) |
+| Figma 화면 분석 · 화면 설계서 생성 | Skill: `/figma [URL] --spec` |
+| Figma 화면 → PRD 초안 생성 | Skill: `/figma [URL] --prd` |
+| Figma 디자인 비교 (Before/After) | Skill: `/figma [URL] --compare [URL2]` |
+| Figma UX 카피 추출 | Skill: `/figma [URL] --copy` |
+| 전략적 고민 논의 · 자문 | Skill: `/strategy` |
+| CEP / Customer Engagement Platform 전략 논의 | Skill: `/strategy` (Braze Docs 자동 참조) |
+| 오래된 결과물 아카이브 정리 (30일 이상 파일 → archive/) | Skill: `/archive` |
 
 > 자주 발생하는 복합 패턴 (기획 파이프라인, 성과 보고, 런치 파이프라인 등): `WORKFLOW_PATTERNS.md` 참조
+
+---
+
+## 모델 선택 지침
+
+복잡도에 따라 모델을 선택한다. 기본은 Sonnet.
+
+| 작업 유형 | 모델 | 이유 |
+|---------|------|------|
+| PRD 작성, Red Team, 전략 논의, Epic 분해 | Sonnet (기본) | 고도 추론 필요 |
+| **캘린더 파일 생성 (CSV/ICS)**, 로그 조회, 단순 스크립트 실행 | **Haiku** | 스크립트 호출만 필요 |
+| 회의록 작성, Confluence 조회·저장 | Haiku 또는 Sonnet | 내용 복잡도에 따라 판단 |
+
+Haiku 적용 시 Agent 호출 예시:
+```python
+Agent(subagent_type="general-purpose", model="haiku", prompt="...")
+```
 
 ---
 
@@ -90,4 +123,8 @@
 - Confluence API: `.claude/skills/confluence-tool/SKILL.md`
 - Gmail 발송: `.claude/skills/gmail-tool/SKILL.md`
 - Notion API: `.claude/skills/notion-tool/SKILL.md`
+- Databricks: `.claude/skills/databricks/SKILL.md`
+- Slack: `.claude/skills/slack/SKILL.md`
+- Figma: `.claude/skills/figma/SKILL.md`
+- Strategy: `.claude/skills/strategy/SKILL.md`
 - 전체 팀 역량 상세: `CAPABILITY_MAP.md`

@@ -2,7 +2,7 @@
 
 > 비서실장이 역량 점검 시 참조하는 문서.
 > 각 팀의 역할, 트리거, 입력/출력, 호출 방법을 정의한다.
-> 마지막 업데이트: 2026-03-19
+> 마지막 업데이트: 2026-03-20
 
 ---
 
@@ -16,7 +16,11 @@ pm-studio
 ├── [디스커버리팀]  시장/제품 Discovery 분석
 ├── [지식팀]        Confluence & Notion 조회/저장
 ├── [커뮤니케이션팀] 이메일 발송 · Jira 티켓
-└── [회고팀]        주간 작업 로그
+├── [회고팀]        주간 작업 로그
+├── [데이터팀]      Databricks 탐색 · 쿼리 · 분석
+├── [협업팀]        Slack 대화 조회 · 챗봇
+├── [디자인팀]      Figma 화면 분석 · 설계서 생성
+└── [전략팀]        전략 자문 · 논의 (Lenny's Podcast + Braze Docs 기반)
 ```
 
 ---
@@ -29,20 +33,41 @@ pm-studio
 ### 팀원 구성
 | 역할 | 호출 방법 | 모델 |
 |------|----------|------|
+| 2-Pager 작성 + 검토 | Skill: `/two-pager` | claude-sonnet-4-6 |
 | PRD 작성 | Skill: `/prd` | claude-sonnet-4-6 |
 | Red Team 검증 | Skill: `/red` | claude-sonnet-4-6 |
 | Epic 분해 + Jira 등록 | Skill: `/epic` | claude-sonnet-4-6 |
 
 ### 트리거 키워드
-PRD, 기능 기획, 요구사항, 제품 명세, Red Team, 가정 검증, 반론, Epic, 에픽, 티켓 분해, 스코프
+2-Pager, 2페이저, 의사결정 문서, 경영진 보고, BLUF, PRD, 기능 기획, 요구사항, 제품 명세, Red Team, 가정 검증, 반론, Epic, 에픽, 티켓 분해, 스코프,
+데이터 파이프라인, 데이터 연동, API 연동, 로그 수집, 배치 파이프라인, 스키마, 데이터 카탈로그
 
 ### 세부 역량
 
-#### PRD 작성 (`/prd`)
+#### 2-Pager 작성 + 검토 (`/two-pager`)
+- **입력**: 아이디어/문제 정의 텍스트, TM-XXXX, 또는 `--refs [Confluence URL]`
+- **출력**: `prd-agent-system/output/two_pager_{YYYYMMDD}_{주제}.md`
+- **구조**: BLUF → 배경·문제 → 솔루션 → 대안 검토 → 리스크 → 성공 지표 → 요청 사항 (7섹션 고정)
+- **특징**:
+  - `two-pager-writer`: 독자 질문 목록 선제 생성 → 7섹션 완성된 문장으로 작성
+  - `two-pager-reviewer`: Silent Read 시뮬레이션 → 약한 섹션 직접 재작성 + `> [!COMMENT]` 코멘트 + 예시 문장 삽입
+  - PRD 연결 없음 — `/prd`는 별도 요청 시에만 실행
+- **실행**: `.claude/skills/two-pager/SKILL.md` 워크플로우 따름
+
+#### 기능 PRD 작성 (`/prd`)
 - **입력**: 이니셔티브 ID(TM-XXXX) 또는 rough note 텍스트
 - **출력**: `prd-agent-system/output/prd_{YYYYMMDD}_{주제}.md`
 - **특징**: TM-XXXX 입력 시 이니셔티브 KB 자동 로드, 이니셔티브 output/ 폴더에도 저장
 - **실행**: `prd-agent-system/CLAUDE.md` 워크플로우 따름
+
+#### 데이터 PRD 작성 (`/prd` — 데이터 파이프라인 요청 시 자동 분기)
+- **입력**: 데이터 파이프라인 rough note + 선택적 Confluence 참조
+- **출력**: `prd-agent-system/output/prd-data_{YYYYMMDD}_{주제}.md`
+- **PRD 유형**: API 연동형 / 로그 수집형 / 배치 파이프라인형 / 혼합형 자동 분류
+- **목차 구조**: I.문서개요 / II.배경 및 이해관계자 / III.데이터정의 및 수집 / IV.활용 및 운영 / V.거버넌스 / VI.부록 (6섹션 고정)
+- **특징**: 스키마 명세 + 데이터 흐름 Mermaid + 개인정보 처리 + 카탈로그 등록 계획 포함
+- **실행**: `prd-agent-system/CLAUDE.md` Section 1-A 판별 → `data-prd-writer` 에이전트
+- **기능 PRD와 구분**: 파일명 prefix `prd-data_` 사용 (기능 PRD는 `prd_`)
 
 #### Red Team 검증 (`/red`)
 - **입력**: PRD 파일 경로 또는 Confluence URL
@@ -56,9 +81,21 @@ PRD, 기능 기획, 요구사항, 제품 명세, Red Team, 가정 검증, 반론
 - **특징**: 계층 구조 자동 설계, 반드시 사용자 컨펌 후 실행
 - **실행**: `epic-ticket-system/CLAUDE.md` 워크플로우 따름
 
+#### QA 문서 생성 (`qa-agent`)
+- **입력**: PRD 파일 경로 (`prd_path`) + 선택적 날짜·주제
+- **출력**:
+  - `prd-agent-system/output/qa_testcase_{YYYYMMDD}_{주제}.md` — QA 테스트케이스 (Happy Path / Edge / Error / UI State)
+  - `prd-agent-system/output/qa_briefing_{YYYYMMDD}_{주제}.md` — PM QA 킥오프 미팅 브리핑
+- **특징**: P0 기능당 TC 최소 3개, FE 동작 명세 → UI State TC 자동 변환, OQ 미결 항목 자동 보류 처리
+- **실행**: `prd-agent-system/.claude/agents/qa-agent/AGENT.md` 워크플로우 따름
+
 ### 팀 내 표준 파이프라인
 ```
-/prd → /red → /epic
+[의사결정 단계]   /two-pager → (사용자 논의/수정)
+                       ↓ (별도 요청 시)
+[기획 단계]      /prd → /red → PRD 보강(자동) → qa-agent
+                       ↓ (별도 요청 시)
+[실행 단계]      /epic → /gtm
 ```
 
 ---
@@ -381,14 +418,17 @@ confluence-reader → 분석 → confluence-writer
 
 ### 역할
 주간 Claude 대화 내역과 Jira/Confluence 활동 데이터를 결합하여 PM 관점의 회고 문서를 생성한다.
+또한 특정 날짜의 시간대별 작업 내역을 캘린더 파일(CSV/ICS)로 변환한다.
 
 ### 팀원 구성
 | 역할 | 호출 방법 | 모델 |
 |------|----------|------|
 | 주간 작업 로그 | Skill: `/work-log` | claude-sonnet-4-6 |
+| 작업 캘린더 생성 (일별 CSV+ICS) | Agent: `calendar-agent-system/CLAUDE.md` | **Haiku** |
 
 ### 트리거 키워드
-작업 로그, 주간 회고, 이번 주 한 일, 활동 정리, work-log
+작업 로그, 주간 회고, 이번 주 한 일, 활동 정리, work-log,
+**오늘/어제/특정 날짜 업무 정리, 타임블럭, 캘린더 파일, CSV, ICS, 일정 생성**
 
 ### 세부 역량
 
@@ -397,6 +437,14 @@ confluence-reader → 분석 → confluence-writer
 - **수집**: `~/.claude/projects/*pm-studio*/*.jsonl` + `scripts/weekly_digest.py`
 - **출력**: `output/work_log_{YYYYMMDD}.md`
 - **특징**: 작업 테마별 분류, 회고 & 인사이트, 다음 주 예상 작업 포함
+
+#### 작업 캘린더 생성 (`/calendar`)
+- **입력**: `--date YYYY-MM-DD` (기본: 어제)
+- **수집**: `output/logs/staff_sessions.jsonl` (status=completed 필터) + Confluence 최근 수정 문서
+- **처리**: 30분 단위 floor → 같은 블럭 병합 → 간략 제목 + 상세 본문 생성
+- **출력**: `calendar-agent-system/output/staff_calendar_{YYYYMMDD}.csv` + `.ics`
+- **규칙**: 시작 시간 :00/:30, 30분/60분 단위, [업무] 접두사 자동 포함
+- **CLAUDE.md**: `calendar-agent-system/CLAUDE.md`
 
 ---
 
@@ -417,6 +465,208 @@ PGM팀
     ├──► 커뮤니케이션팀 (Confluence 페이지 → 이메일 발송)
     └──► (모든 팀의 산출물 → Confluence 저장)
 ```
+
+---
+
+---
+
+## [데이터팀] Databricks 탐색 · 쿼리 · 분석
+
+### 역할
+Databricks Unity Catalog를 탐색하고, SQL을 실행하며, 데이터 기반 인사이트를 생성한다.
+
+### 팀원 구성
+| 역할 | 호출 방법 | 모델 |
+|------|----------|------|
+| 데이터 탐색 · 쿼리 · 분석 오케스트레이터 | Skill: `/databricks` | claude-sonnet-4-6 |
+| Unity Catalog 구조 탐색 | Agent: `schema-explorer` (databricks-agent-system 내) | claude-haiku-4-5 |
+| SQL 생성 · 실행 | Agent: `query-builder` (databricks-agent-system 내) | claude-sonnet-4-6 |
+| 데이터 분석 · 인사이트 | Agent: `data-analyst` (databricks-agent-system 내) | claude-sonnet-4-6 |
+
+### 트리거 키워드
+Databricks, 데이터 탐색, 쿼리, SQL, Unity Catalog, 테이블 구조, 데이터 분석, KPI 조회,
+DAU, MAU, 지표 조회, 코호트, 트렌드 분석, 데이터 확인
+
+### 세부 역량
+
+#### Unity Catalog 탐색 (`/databricks --explore`)
+- **입력**: 탐색 대상 (없으면 전체 카탈로그)
+- **출력**: `databricks-agent-system/output/explore_{YYYYMMDD}_{target}.md`
+- **특징**: 카탈로그 → 스키마 → 테이블 계층 탐색, PM 관점 유용 테이블 식별
+
+#### SQL 쿼리 실행 (`/databricks --query`)
+- **입력**: 자연어 질문 또는 SQL 직접 입력
+- **출력**: `databricks-agent-system/output/query_{YYYYMMDD}_{slug}.md`
+- **안전 규칙**: SELECT만 허용, 1000행 LIMIT 자동 적용
+- **특징**: 자연어 → SQL 자동 변환, 실행 전 SQL 미리보기
+
+#### 데이터 분석 리포트 (`/databricks --analyze`)
+- **입력**: 테이블명 + 분석 주제
+- **출력**: `databricks-agent-system/output/analyze_{YYYYMMDD}_{주제}.md`
+- **특징**: 자동 쿼리 3~5개 생성·실행, WoW/MoM 트렌드, 의사결정 제안
+- **이니셔티브 연결**: `--initiative TM-XXXX` 옵션으로 목표 지표 연계
+
+### 연결 설정 필요 (최초 1회)
+`.env`에 `DATABRICKS_HOST`, `DATABRICKS_TOKEN`, `DATABRICKS_WAREHOUSE_ID` 추가
+→ `databricks-agent-system/CLAUDE.md` §Step 0 참조
+
+### 팀 내 표준 파이프라인
+```
+/databricks --explore               → 탐색 후 분석 대상 테이블 파악
+/databricks --analyze {table} "주제" → 자동 분석 리포트
+→ (선택) 인사이트 결과 → /prd 입력으로 활용
+```
+
+---
+
+## [협업팀] Slack 대화 조회 · 챗봇
+
+### 역할
+Slack 채널의 대화를 수집·요약하고, 결정 사항과 Action Item을 추출한다.
+
+### 팀원 구성
+| 역할 | 호출 방법 | 모델 |
+|------|----------|------|
+| Slack 조회 · 요약 오케스트레이터 | Skill: `/slack` | claude-sonnet-4-6 |
+| 메시지 수집 | Agent: `slack-reader` (slack-agent-system 내) | claude-haiku-4-5 |
+| 대화 요약 · AI 분석 | Agent: `conversation-summarizer` (slack-agent-system 내) | claude-sonnet-4-6 |
+
+### 트리거 키워드
+Slack, 슬랙, 채널 대화, 오늘 대화, 이번 주 대화, 결정 사항, Action Item, 슬랙 요약, 챗봇
+
+### 세부 역량
+
+#### 오늘 대화 조회 (`/slack --today [#채널]`)
+- **입력**: 채널명 (없으면 기본 채널)
+- **출력**: `slack-agent-system/output/slack_{YYYYMMDD}_{channel}_today.md`
+- **특징**: 스레드 포함 수집, 결정사항·Action Item 자동 추출
+
+#### 이번 주 대화 조회 (`/slack --week [#채널]`)
+- **입력**: 채널명 (없으면 기본 채널)
+- **출력**: `slack-agent-system/output/slack_{YYYYMMDD}_{channel}_week.md`
+- **특징**: 월요일부터 현재까지, 주요 주제별 클러스터링
+
+#### 키워드 검색 (`/slack --search "[키워드]" [#채널]`)
+- **입력**: 검색 키워드 + 채널명
+- **출력**: 검색 결과 목록 (최근 30일)
+
+#### 메시지 발송 (`/slack --send [#채널] "[메시지]"`)
+- **주의**: 발송 전 반드시 컨펌. 되돌리기 불가.
+
+### /pgm 파이프라인 연계
+- `/slack --week #match-pm` 결과 → `pgm-agent-system/output/slack_summary_{YYYYMMDD}.txt` 보완
+- Flash Report 보완 자료로 활용 가능
+
+### 연결 설정 필요 (최초 1회)
+`.env`에 `SLACK_BOT_TOKEN` 추가, Bot을 채널에 초대
+→ `slack-agent-system/CLAUDE.md` §Step 0 참조
+
+---
+
+## [디자인팀] Figma 화면 분석 · 설계서 생성
+
+### 역할
+Figma 파일을 분석하여 화면 설계서·UX 스펙·PRD 초안을 생성하고, 디자인과 기획을 연결한다.
+
+### 팀원 구성
+| 역할 | 호출 방법 | 모델 |
+|------|----------|------|
+| Figma 분석 오케스트레이터 | Skill: `/figma` | claude-sonnet-4-6 |
+| Figma 파일 수집 | Agent: `figma-reader` → `figma-agent-system/.claude/agents/figma-reader/AGENT.md` | claude-haiku-4-5 |
+| 화면 구조 분석 | Agent: `screen-analyst` → `figma-agent-system/.claude/agents/screen-analyst/AGENT.md` | claude-sonnet-4-6 |
+| 화면 설계서 작성 | Agent: `spec-writer` → `figma-agent-system/.claude/agents/spec-writer/AGENT.md` | claude-sonnet-4-6 |
+
+### 트리거 키워드
+Figma, 피그마, 화면 분석, 화면 설계서, 스펙 문서, 디자인 분석, UX 카피, 프레임 분석,
+화면 비교, Before/After, 컴포넌트 분석, 디자인 → PRD
+
+### 세부 역량
+
+#### 화면 구조 분석 (`/figma [URL]`)
+- **입력**: Figma URL (파일 또는 특정 프레임)
+- **출력**: `figma-agent-system/output/figma_analyze_{YYYYMMDD}_{주제}.md`
+- **특징**: 페이지·프레임 목록, 사용자 플로우 추론, PM 체크리스트
+
+#### 화면 설계서 생성 (`/figma [URL] --spec`)
+- **입력**: Figma URL
+- **출력**: `figma-agent-system/output/figma_spec_{YYYYMMDD}_{주제}.md`
+- **특징**: 화면별 요소·인터랙션·상태·엣지케이스 문서화, Confluence 저장 연계
+
+#### Figma → PRD 초안 (`/figma [URL] --prd`)
+- **입력**: Figma URL
+- **출력**: `prd-agent-system/output/prd_{YYYYMMDD}_{주제}.md`
+- **특징**: 화면 분석 결과를 Rough Note로 변환 → 일반 PRD 파이프라인 실행
+- **의존**: 기획팀 `/prd` 스킬과 자동 연계
+
+#### 디자인 비교 (`/figma [URL1] --compare [URL2]`)
+- **입력**: 두 Figma URL (이전/이후)
+- **출력**: `figma-agent-system/output/figma_compare_{YYYYMMDD}_{주제}.md`
+- **특징**: 추가/삭제/변경 화면 목록, 카피 변경 사항
+
+#### UX 카피 추출 (`/figma [URL] --copy`)
+- **입력**: Figma URL
+- **출력**: `figma-agent-system/output/figma_copy_{YYYYMMDD}_{주제}.md`
+- **특징**: 모든 텍스트 레이어 수집, 페이지·프레임별 정리
+
+### 연결 설정 필요 (최초 1회)
+`.env`에 `FIGMA_ACCESS_TOKEN` 추가
+→ `figma-agent-system/CLAUDE.md` §Step 0 참조
+
+### 팀 내 표준 파이프라인
+```
+/figma [URL]          → 화면 구조 파악
+/figma [URL] --spec   → 설계서 생성 → Confluence 저장
+/figma [URL] --prd    → PRD 초안 → /red → /epic
+```
+
+### 팀간 의존 관계
+- `/figma --prd` 실행 시 → 기획팀 `/prd` 스킬 연계
+- 화면 설계서 완성 후 → 지식팀 `confluence-writer` 저장
+
+---
+
+## [전략팀] 전략 자문 · 논의
+
+### 역할
+PM의 전략적 고민과 의사결정을 함께 논의한다.
+Lenny's Podcast 트랜스크립트와 Braze Docs를 레퍼런스로 삼아 근거 있는 전략 조언을 제공한다.
+
+### 팀원 구성
+| 역할 | 호출 방법 | 모델 |
+|------|----------|------|
+| 전략 자문 · 논의 | Skill: `/strategy` | claude-sonnet-4-6 |
+
+### 트리거 키워드
+전략, 방향성, 포지셔닝, 우선순위, 트레이드오프, 로드맵, 의사결정, CEP, Customer Engagement,
+브레이즈, Braze, 리텐션, 성장 전략, GTM 전략, 제품 철학, 경쟁 전략, 논의, 고민, 어떻게 생각해
+
+### 세부 역량
+
+#### 전략 논의 (`/strategy`)
+- **입력**: 전략적 질문 또는 고민 텍스트
+- **출력**: 대화형 전략 논의 (필요 시 `output/strategy/` 저장)
+- **지식 소스 1**: Lenny's Podcast Transcripts — `https://github.com/chatprd/lennys-podcast-transcripts`
+  - 일반 전략, 로드맵, 리텐션, 성장, 조직, PM 방법론
+- **지식 소스 2**: Braze Docs — `https://github.com/braze-inc/braze-docs/tree/develop/_docs/_user_guide`
+  - CEP / Customer Engagement Platform 관련 질문에 특화
+- **분류 로직**:
+  - CEP·Braze 관련 → Braze Docs 우선 탐색
+  - 일반 전략 → Lenny's Podcast 탐색
+  - 복합 주제 → 두 소스 모두 참조
+- **특징**: 일방적 답변보다 "같이 생각해보는" 대화체, 구체적 선택지 제시
+- **이니셔티브 연동**: `--initiative TM-XXXX` 옵션으로 컨텍스트 보강
+- **실행**: `.claude/skills/strategy/SKILL.md` 워크플로우 따름
+
+### 팀 내 표준 파이프라인
+```
+/strategy "CEP 로드맵 우선순위 어떻게 가져가야 해?"
+/strategy --initiative TM-2061 "이 기능의 차별화 포인트는?"
+/strategy "브레이즈는 Canvas를 어떻게 설계했어?"  → Braze Docs 자동 참조
+```
+
+### 팀간 의존 관계
+- 전략 논의 결과 → 기획팀 `/prd` 입력으로 활용
+- 전략 논의 결과 → 마케팅팀 `/gtm` 포지셔닝에 활용
 
 ---
 
